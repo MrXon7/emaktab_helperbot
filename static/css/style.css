@@ -1,0 +1,60 @@
+﻿@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.animate-slide-up {
+    animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border-radius: 4px;
+}
+
+/* Active Stat Card Styles */
+.stat-card.active-pending {
+    border-color: #0D6EFD !important;
+    background-color: #EFF6FF !important;
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.15) !important;
+}
+
+.stat-card.active-success {
+    border-color: #10B981 !important;
+    background-color: #ECFDF5 !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15) !important;
+}
+
+.stat-card.active-failed {
+    border-color: #F43F5E !important;
+    background-color: #FFF1F2 !important;
+    box-shadow: 0 4px 12px rgba(244, 63, 94, 0.15) !important;
+}
+
+/* Telegram WebApp Theme Variables Integration */
+:root {
+    --tg-theme-bg-color: #F8FAFC;
+    --tg-theme-text-color: #1E293B;
+    --tg-theme-button-color: #0D6EFD;
+    --tg-theme-button-text-color: #FFFFFF;
+}
+
+body {
+    background-color: var(--tg-theme-bg-color, #F8FAFC);
+    color: var(--tg-theme-text-color, #1E293B);
+    -webkit-tap-highlight-color: transparent;
+}
