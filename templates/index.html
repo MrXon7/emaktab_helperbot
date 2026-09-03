@@ -1,10 +1,12 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>eMaktab Helper</title>
-    <!-- Telegram WebApp SDK -->
+    <!-- Favicon (404 xatosini oldini olish) -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+    <!-- Telegram WebApp SDK - eng birinchi yuklanadi -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -13,6 +15,26 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        /* Loading ekrani */
+        #app-loader {
+            position: fixed; inset: 0; background: #F8FAFC;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 9999; gap: 12px;
+            transition: opacity 0.35s ease;
+        }
+        #app-loader.fade-out { opacity: 0; pointer-events: none; }
+        #app-loader.hidden-loader { display: none; }
+        .loader-spinner {
+            width: 36px; height: 36px;
+            border: 3px solid #E2E8F0;
+            border-top-color: #0D6EFD;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
     <script>
         tailwind.config = {
             theme: {
@@ -33,6 +55,12 @@
     </script>
 </head>
 <body class="bg-surface text-slate-800 font-sans antialiased select-none pb-32 overflow-x-hidden">
+
+    <!-- Loading ekrani (sahifa yuklanguncha) -->
+    <div id="app-loader">
+        <div class="loader-spinner"></div>
+        <p class="text-xs text-slate-500 font-semibold">Yuklanmoqda...</p>
+    </div>
 
     <!-- Top App Bar (Toza va ixcham) -->
     <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-border px-3.5 sm:px-4 py-2.5 sm:py-3 shadow-sm">
