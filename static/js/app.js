@@ -1,12 +1,11 @@
-// Telegram WebApp Initialization - DOMContentLoaded kutiladi
+// Telegram WebApp Initialization
 const tg = window.Telegram?.WebApp;
-
-// Loading ekranini yopish
-function hideLoader() {
-    const loader = document.getElementById('app-loader');
-    if (loader) {
-        loader.classList.add('fade-out');
-        setTimeout(() => loader.classList.add('hidden-loader'), 350);
+if (tg) {
+    try {
+        tg.ready();
+        tg.expand();
+    } catch(e) {
+        console.error("TG ready error:", e);
     }
 }
 
@@ -70,11 +69,6 @@ const bulkStatusText = document.getElementById('bulk-status-text');
 // 1. MA'LUMOTLARNI SUPABASE BAZASIDAN YUKLASH
 // -------------------------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
-    // Telegram Mini App ni to'g'ri ishga tushirish
-    if (tg) {
-        tg.ready();     // Telegram ga "sahifa tayyor" degan signal
-        tg.expand();    // To'liq ekranga ochish
-    }
     loadStudentsFromServer();
 });
 
@@ -91,12 +85,11 @@ async function loadStudentsFromServer() {
             updateStats();
         } else {
             console.error('Serverdan yuklashda xato:', resp.status);
+            renderStudents(); // Bo'sh bo'lsa ham ekranni tozalash
         }
     } catch (e) {
         console.error('Tarmoq xatosi:', e);
-    } finally {
-        // Loading ekranini har doim yopish (xatolik bo'lsa ham)
-        hideLoader();
+        renderStudents();
     }
 }
 
