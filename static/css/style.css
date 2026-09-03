@@ -1,4 +1,4 @@
-﻿@keyframes slideUp {
+@keyframes slideUp {
     from {
         transform: translateY(100%);
         opacity: 0;
@@ -57,4 +57,13 @@ body {
     background-color: var(--tg-theme-bg-color, #F8FAFC);
     color: var(--tg-theme-text-color, #1E293B);
     -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
 }
+
+/* Matn toshishidan 100% himoya */
+* {
+    box-sizing: border-box;
+    word-break: break-word;
+}
+

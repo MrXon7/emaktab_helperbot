@@ -1,4 +1,4 @@
-﻿import os
+import os
 import io
 import time
 import asyncio
@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from aiogram import types
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment
+import httpx
 
 from config import settings
 from bot import bot, dp
@@ -28,15 +29,34 @@ logger = logging.getLogger(__name__)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
 
+async def keep_alive_task():
+    """
+    Render.com da serverni uxlab qolishdan saqlash uchun 
+    har 10 daqiqada (600s) o'zining /health manziliga so'rov yuborib turadi.
+    """
+    await asyncio.sleep(30) # Dastlabki 30 soniya kutish
+    while True:
+        try:
+            if settings.WEBAPP_URL and "localhost" not in settings.WEBAPP_URL and "127.0.0.1" not in settings.WEBAPP_URL:
+                health_url = f"{settings.WEBAPP_URL.rstrip('/')}/health"
+                async with httpx.AsyncClient(timeout=15.0) as client:
+                    r = await client.get(health_url)
+                    logger.info(f"⏰ [Self-Ping] Server uyg'oq saqlandi: {health_url} (Status: {r.status_code})")
+        except Exception as e:
+            logger.warning(f"⚠️ [Self-Ping] Xatolik: {e}")
+        
+        # Har 10 daqiqada takrorlanadi (Render 15 daqiqada uxlaydi)
+        await asyncio.sleep(600)
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: Supabase jadvallarini tekshirish/yaratish
+    # 1. Supabase jadvallarini tekshirish/yaratish
     try:
         init_db()
     except Exception as e:
         logger.error(f"DB Startup error: {e}")
 
-    # Webhook sozlash (agar token bo'lsa)
+    # 2. Webhook sozlash (agar token bo'lsa)
     if bot and settings.BOT_TOKEN:
         webhook_url = f"{settings.WEBAPP_URL.rstrip('/')}/webhook"
         try:
@@ -45,9 +65,13 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.warning(f"Webhook o'rnatilmadi: {e}")
     
+    # 3. O'zini-o'zi uyg'oq saqlash fon vazifasini ishga tushirish
+    ping_task = asyncio.create_task(keep_alive_task())
+
     yield
     
     # Shutdown
+    ping_task.cancel()
     if bot and settings.BOT_TOKEN:
         try:
             await bot.delete_webhook()

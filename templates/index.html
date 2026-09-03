@@ -2,7 +2,7 @@
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>eMaktab Helper</title>
     <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -32,22 +32,22 @@
         }
     </script>
 </head>
-<body class="bg-surface text-slate-800 font-sans antialiased select-none pb-28">
+<body class="bg-surface text-slate-800 font-sans antialiased select-none pb-32 overflow-x-hidden">
 
     <!-- Top App Bar (Toza va ixcham) -->
-    <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-border px-4 py-3 shadow-sm">
-        <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-2.5">
-                <div class="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-primary font-bold text-lg shadow-inner">
+    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-border px-3.5 sm:px-4 py-2.5 sm:py-3 shadow-sm">
+        <div class="flex items-center justify-between max-w-lg mx-auto">
+            <div class="flex items-center space-x-2 sm:space-x-2.5 min-w-0">
+                <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-blue-50 flex items-center justify-center text-primary font-bold text-base sm:text-lg shadow-inner shrink-0">
                     <i class="fa-solid fa-graduation-cap"></i>
                 </div>
-                <div>
-                    <h1 class="text-base font-extrabold text-slate-900 tracking-tight leading-none">eMaktab Helper</h1>
-                    <p class="text-[11px] text-slate-500 font-medium mt-0.5">Avtomatizatsiya & Captcha</p>
+                <div class="min-w-0">
+                    <h1 class="text-sm sm:text-base font-extrabold text-slate-900 tracking-tight leading-none truncate">eMaktab Helper</h1>
+                    <p class="text-[10px] sm:text-[11px] text-slate-500 font-medium mt-0.5 truncate">Avtomatizatsiya & Captcha</p>
                 </div>
             </div>
             
-            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200">
+            <span class="inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200 shrink-0">
                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span> Tayyor
             </span>
         </div>
@@ -57,82 +57,82 @@
     </header>
 
     <!-- Asosiy Kontent -->
-    <main class="p-4 max-w-lg mx-auto space-y-4">
+    <main class="p-3 sm:p-4 max-w-lg mx-auto space-y-3.5 sm:space-y-4">
 
         <!-- Statistika Kartalari (Bosilganda filtrlaydi) -->
-        <div class="grid grid-cols-3 gap-2.5">
+        <div class="grid grid-cols-3 gap-2 sm:gap-2.5">
             <!-- Kutilmoqda -->
-            <div id="stat-card-pending" class="stat-card bg-white rounded-2xl p-3 border-2 border-border shadow-sm flex flex-col justify-between cursor-pointer transition active:scale-95 hover:shadow-md">
-                <div class="flex items-center justify-between text-slate-500 mb-1">
-                    <span class="text-[11px] font-bold">Kutilmoqda</span>
-                    <i class="fa-regular fa-clock text-xs text-blue-500"></i>
+            <div id="stat-card-pending" class="stat-card bg-white rounded-2xl p-2.5 sm:p-3 border-2 border-border shadow-sm flex flex-col justify-between cursor-pointer transition active:scale-95 hover:shadow-md min-w-0">
+                <div class="flex items-center justify-between text-slate-500 mb-0.5 sm:mb-1">
+                    <span class="text-[10px] sm:text-[11px] font-bold truncate">Kutilmoqda</span>
+                    <i class="fa-regular fa-clock text-[10px] sm:text-xs text-blue-500 shrink-0"></i>
                 </div>
-                <div id="stat-pending" class="text-xl font-black text-slate-800">0</div>
-                <span class="text-[9px] text-slate-400 font-semibold mt-0.5">Filtrlash uchun</span>
+                <div id="stat-pending" class="text-lg sm:text-xl font-black text-slate-800">0</div>
+                <span class="text-[8px] sm:text-[9px] text-slate-400 font-semibold mt-0.5 truncate">Filtrlash uchun</span>
             </div>
 
             <!-- Muvaffaqiyatli -->
-            <div id="stat-card-success" class="stat-card bg-white rounded-2xl p-3 border-2 border-border shadow-sm flex flex-col justify-between cursor-pointer transition active:scale-95 hover:shadow-md">
-                <div class="flex items-center justify-between text-slate-500 mb-1">
-                    <span class="text-[11px] font-bold text-emerald-600">Muvaffaqiyatli</span>
-                    <i class="fa-solid fa-circle-check text-xs text-emerald-500"></i>
+            <div id="stat-card-success" class="stat-card bg-white rounded-2xl p-2.5 sm:p-3 border-2 border-border shadow-sm flex flex-col justify-between cursor-pointer transition active:scale-95 hover:shadow-md min-w-0">
+                <div class="flex items-center justify-between text-slate-500 mb-0.5 sm:mb-1">
+                    <span class="text-[10px] sm:text-[11px] font-bold text-emerald-600 truncate">Tayyor</span>
+                    <i class="fa-solid fa-circle-check text-[10px] sm:text-xs text-emerald-500 shrink-0"></i>
                 </div>
-                <div id="stat-success" class="text-xl font-black text-emerald-600">0</div>
-                <span class="text-[9px] text-emerald-500 font-semibold mt-0.5">7 kunda yangilanadi</span>
+                <div id="stat-success" class="text-lg sm:text-xl font-black text-emerald-600">0</div>
+                <span class="text-[8px] sm:text-[9px] text-emerald-500 font-semibold mt-0.5 truncate">7 kunda yangi</span>
             </div>
 
             <!-- Xatolik -->
-            <div id="stat-card-failed" class="stat-card bg-white rounded-2xl p-3 border-2 border-border shadow-sm flex flex-col justify-between cursor-pointer transition active:scale-95 hover:shadow-md">
-                <div class="flex items-center justify-between text-slate-500 mb-1">
-                    <span class="text-[11px] font-bold text-rose-500">Xatolik</span>
-                    <i class="fa-solid fa-triangle-exclamation text-xs text-rose-500"></i>
+            <div id="stat-card-failed" class="stat-card bg-white rounded-2xl p-2.5 sm:p-3 border-2 border-border shadow-sm flex flex-col justify-between cursor-pointer transition active:scale-95 hover:shadow-md min-w-0">
+                <div class="flex items-center justify-between text-slate-500 mb-0.5 sm:mb-1">
+                    <span class="text-[10px] sm:text-[11px] font-bold text-rose-500 truncate">Xatolik</span>
+                    <i class="fa-solid fa-triangle-exclamation text-[10px] sm:text-xs text-rose-500 shrink-0"></i>
                 </div>
-                <div id="stat-failed" class="text-xl font-black text-rose-600">0</div>
-                <span class="text-[9px] text-rose-400 font-semibold mt-0.5">Qayta urinish</span>
+                <div id="stat-failed" class="text-lg sm:text-xl font-black text-rose-600">0</div>
+                <span class="text-[8px] sm:text-[9px] text-rose-400 font-semibold mt-0.5 truncate">Qayta urinish</span>
             </div>
         </div>
 
         <!-- Tezkor Harakatlar (Amallar paneli) -->
-        <div class="grid grid-cols-2 gap-2.5">
+        <div class="grid grid-cols-2 gap-2 sm:gap-2.5">
             <!-- Excel Bilan Ishlash -->
-            <button id="btn-open-excel-menu" class="p-3 bg-white border border-border hover:border-emerald-300 rounded-2xl flex items-center space-x-3 shadow-sm hover:shadow transition group text-left active:scale-[0.98]">
-                <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-base group-hover:bg-emerald-600 group-hover:text-white transition shrink-0">
+            <button id="btn-open-excel-menu" class="p-2.5 sm:p-3 bg-white border border-border hover:border-emerald-300 rounded-2xl flex items-center space-x-2.5 sm:space-x-3 shadow-sm hover:shadow transition group text-left active:scale-[0.98] min-w-0">
+                <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm sm:text-base group-hover:bg-emerald-600 group-hover:text-white transition shrink-0">
                     <i class="fa-solid fa-file-excel"></i>
                 </div>
                 <div class="min-w-0">
-                    <h4 class="text-xs font-bold text-slate-900 group-hover:text-emerald-700 truncate">Excel Import</h4>
-                    <p class="text-[10px] text-slate-400 font-medium truncate">Yuklash & Namuna</p>
+                    <h4 class="text-[11px] sm:text-xs font-bold text-slate-900 group-hover:text-emerald-700 truncate">Excel Import</h4>
+                    <p class="text-[9px] sm:text-[10px] text-slate-400 font-medium truncate">Yuklash & Namuna</p>
                 </div>
             </button>
 
             <!-- Yangi O'quvchi Qo'shish -->
-            <button id="btn-add-manual" class="p-3 bg-white border border-border hover:border-blue-300 rounded-2xl flex items-center space-x-3 shadow-sm hover:shadow transition group text-left active:scale-[0.98]">
-                <div class="w-10 h-10 rounded-xl bg-blue-50 text-primary flex items-center justify-center text-base group-hover:bg-primary group-hover:text-white transition shrink-0">
+            <button id="btn-add-manual" class="p-2.5 sm:p-3 bg-white border border-border hover:border-blue-300 rounded-2xl flex items-center space-x-2.5 sm:space-x-3 shadow-sm hover:shadow transition group text-left active:scale-[0.98] min-w-0">
+                <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-blue-50 text-primary flex items-center justify-center text-sm sm:text-base group-hover:bg-primary group-hover:text-white transition shrink-0">
                     <i class="fa-solid fa-user-plus"></i>
                 </div>
                 <div class="min-w-0">
-                    <h4 class="text-xs font-bold text-slate-900 group-hover:text-primary truncate">O'quvchi qo'shish</h4>
-                    <p class="text-[10px] text-slate-400 font-medium truncate">Qo'lda kiritish</p>
+                    <h4 class="text-[11px] sm:text-xs font-bold text-slate-900 group-hover:text-primary truncate">O'quvchi qo'shish</h4>
+                    <p class="text-[9px] sm:text-[10px] text-slate-400 font-medium truncate">Qo'lda kiritish</p>
                 </div>
             </button>
         </div>
 
         <!-- Aktiv status filtri belgisi -->
         <div id="active-filter-badge-container" class="hidden flex items-center justify-between bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-xl text-xs text-primary font-bold">
-            <span id="active-filter-text">Filtr: Kutilmoqda</span>
-            <button id="btn-clear-status-filter" class="text-slate-500 hover:text-slate-800 text-xs">
+            <span id="active-filter-text" class="truncate">Filtr: Kutilmoqda</span>
+            <button id="btn-clear-status-filter" class="text-slate-500 hover:text-slate-800 text-xs shrink-0 ml-2">
                 <i class="fa-solid fa-xmark mr-1"></i>Bekor qilish
             </button>
         </div>
 
         <!-- Ommaviy progress (Fonda ishlayotganda chiqadi) -->
-        <div id="bulk-progress-container" class="hidden bg-white p-3.5 rounded-2xl border border-blue-100 shadow-sm space-y-2">
+        <div id="bulk-progress-container" class="hidden bg-white p-3 sm:p-3.5 rounded-2xl border border-blue-100 shadow-sm space-y-2">
             <div class="flex items-center justify-between text-xs font-semibold text-slate-700">
-                <span class="flex items-center space-x-1.5">
-                    <span class="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span>
-                    <span id="bulk-status-text">O'quvchilarga kirilmoqda...</span>
+                <span class="flex items-center space-x-1.5 min-w-0">
+                    <span class="w-2 h-2 rounded-full bg-blue-500 animate-ping shrink-0"></span>
+                    <span id="bulk-status-text" class="truncate">O'quvchilarga kirilmoqda...</span>
                 </span>
-                <span id="bulk-progress-percent" class="text-primary font-bold">0%</span>
+                <span id="bulk-progress-percent" class="text-primary font-bold shrink-0 ml-2">0%</span>
             </div>
             <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
                 <div id="bulk-progress-bar" class="bg-primary h-full rounded-full transition-all duration-300 w-0"></div>
@@ -143,17 +143,17 @@
         <div class="space-y-2">
             <!-- Qidiruv maydoni -->
             <div class="relative">
-                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
                 <input type="text" id="search-input" placeholder="Ism, login bo'yicha qidirish..." 
-                    class="w-full pl-9 pr-4 py-2.5 bg-white border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition shadow-sm">
+                    class="w-full pl-8 sm:pl-9 pr-3.5 py-2 sm:py-2.5 bg-white border border-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition shadow-sm">
             </div>
 
             <!-- Dropdown Filterlar -->
             <div class="grid grid-cols-2 gap-2">
-                <select id="filter-school" class="w-full px-3 py-2 bg-white border border-border rounded-xl text-xs text-slate-700 font-medium focus:outline-none shadow-sm">
+                <select id="filter-school" class="w-full px-2.5 sm:px-3 py-2 bg-white border border-border rounded-xl text-[11px] sm:text-xs text-slate-700 font-medium focus:outline-none shadow-sm truncate">
                     <option value="all">Barcha maktablar</option>
                 </select>
-                <select id="filter-grade" class="w-full px-3 py-2 bg-white border border-border rounded-xl text-xs text-slate-700 font-medium focus:outline-none shadow-sm">
+                <select id="filter-grade" class="w-full px-2.5 sm:px-3 py-2 bg-white border border-border rounded-xl text-[11px] sm:text-xs text-slate-700 font-medium focus:outline-none shadow-sm truncate">
                     <option value="all">Barcha sinflar</option>
                 </select>
             </div>
@@ -162,8 +162,8 @@
         <!-- O'quvchilar ro'yxati -->
         <div class="space-y-2.5" id="students-container">
             <!-- Bo'sh holat -->
-            <div id="empty-state" class="text-center py-12 px-4 bg-white rounded-3xl border border-dashed border-slate-300 space-y-3">
-                <div class="w-14 h-14 mx-auto rounded-full bg-blue-50 text-primary flex items-center justify-center text-2xl">
+            <div id="empty-state" class="text-center py-10 sm:py-12 px-4 bg-white rounded-3xl border border-dashed border-slate-300 space-y-3">
+                <div class="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-full bg-blue-50 text-primary flex items-center justify-center text-xl sm:text-2xl">
                     <i class="fa-solid fa-file-import"></i>
                 </div>
                 <div class="space-y-1">
@@ -178,17 +178,17 @@
         </div>
     </main>
 
-    <!-- Pastki harakat tugmasi (Bottom Bar) -->
-    <div class="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-md border-t border-border z-20 max-w-lg mx-auto">
-        <button id="btn-main-action" class="w-full py-3.5 px-4 rounded-2xl bg-primary hover:bg-primary-dark text-white font-bold text-sm shadow-lg shadow-blue-500/25 transition active:scale-[0.98] flex items-center justify-center space-x-2">
+    <!-- Pastki harakat tugmasi (Bottom Bar - Kichik va katta ekranlarga mos) -->
+    <div class="fixed bottom-0 left-0 right-0 p-3 sm:p-4 bg-white/95 backdrop-blur-md border-t border-border z-20 max-w-lg mx-auto">
+        <button id="btn-main-action" class="w-full py-3 sm:py-3.5 px-4 rounded-2xl bg-primary hover:bg-primary-dark text-white font-bold text-xs sm:text-sm shadow-lg shadow-blue-500/25 transition active:scale-[0.98] flex items-center justify-center space-x-2">
             <i class="fa-solid fa-play"></i>
-            <span id="main-action-text">AVTOMATIK KIRISH</span>
+            <span id="main-action-text" class="tracking-wide">AVTOMATIK KIRISH</span>
         </button>
     </div>
 
     <!-- Excel Tanlash va Namuna Yuklash Modali -->
     <div id="modal-excel-menu" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center hidden p-0 sm:p-4">
-        <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 space-y-4 shadow-2xl animate-slide-up">
+        <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-4 sm:p-5 space-y-4 shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto">
             <div class="flex items-center justify-between border-b border-border pb-3">
                 <div class="flex items-center space-x-2 text-emerald-600">
                     <i class="fa-solid fa-file-excel text-lg"></i>
@@ -205,31 +205,31 @@
 
             <div class="space-y-2.5">
                 <!-- Fayl yuklash -->
-                <button onclick="chooseExcelFile()" class="w-full p-3.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-2xl text-left flex items-center justify-between transition group">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center text-base shadow-sm">
+                <button onclick="chooseExcelFile()" class="w-full p-3 sm:p-3.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-2xl text-left flex items-center justify-between transition group">
+                    <div class="flex items-center space-x-3 min-w-0">
+                        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center text-sm sm:text-base shadow-sm shrink-0">
                             <i class="fa-solid fa-upload"></i>
                         </div>
-                        <div>
-                            <h4 class="text-xs font-bold text-slate-900 group-hover:text-emerald-700">Excel Fayl Yuklash (.xlsx)</h4>
-                            <p class="text-[11px] text-slate-500">O'quvchilar ro'yxatini kiritish</p>
+                        <div class="min-w-0">
+                            <h4 class="text-xs font-bold text-slate-900 group-hover:text-emerald-700 truncate">Excel Fayl Yuklash (.xlsx)</h4>
+                            <p class="text-[10px] sm:text-[11px] text-slate-500 truncate">O'quvchilar ro'yxatini kiritish</p>
                         </div>
                     </div>
-                    <i class="fa-solid fa-chevron-right text-xs text-slate-400 group-hover:text-emerald-600"></i>
+                    <i class="fa-solid fa-chevron-right text-xs text-slate-400 group-hover:text-emerald-600 shrink-0 ml-2"></i>
                 </button>
 
                 <!-- Namuna yuklab olish -->
-                <a href="/api/download-template" download="emaktab_namuna.xlsx" onclick="closeExcelMenu()" class="w-full p-3.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-2xl text-left flex items-center justify-between transition group block">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 rounded-xl bg-blue-500 text-white flex items-center justify-center text-base shadow-sm">
+                <a href="/api/download-template" download="emaktab_namuna.xlsx" onclick="closeExcelMenu()" class="w-full p-3 sm:p-3.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-2xl text-left flex items-center justify-between transition group block">
+                    <div class="flex items-center space-x-3 min-w-0">
+                        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-500 text-white flex items-center justify-center text-sm sm:text-base shadow-sm shrink-0">
                             <i class="fa-solid fa-download"></i>
                         </div>
-                        <div>
-                            <h4 class="text-xs font-bold text-slate-900 group-hover:text-blue-700">Namuna Faylni Yuklab Olish</h4>
-                            <p class="text-[11px] text-slate-500">Tayyor shablon jadvali (.xlsx)</p>
+                        <div class="min-w-0">
+                            <h4 class="text-xs font-bold text-slate-900 group-hover:text-blue-700 truncate">Namuna Faylni Yuklab Olish</h4>
+                            <p class="text-[10px] sm:text-[11px] text-slate-500 truncate">Tayyor shablon jadvali (.xlsx)</p>
                         </div>
                     </div>
-                    <i class="fa-solid fa-arrow-down text-xs text-slate-400 group-hover:text-blue-600"></i>
+                    <i class="fa-solid fa-arrow-down text-xs text-slate-400 group-hover:text-blue-600 shrink-0 ml-2"></i>
                 </a>
             </div>
         </div>
@@ -237,8 +237,8 @@
 
     <!-- O'quvchi Qo'shish / Tahrirlash Modali -->
     <div id="modal-student-form" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center hidden p-0 sm:p-4">
-        <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 space-y-4 shadow-2xl animate-slide-up">
-            <div class="flex items-center justify-between border-b border-border pb-3">
+        <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-4 sm:p-5 space-y-3.5 sm:space-y-4 shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-border pb-2.5 sm:pb-3">
                 <h3 id="modal-form-title" class="text-sm font-bold text-slate-900">Yangi o'quvchi qo'shish</h3>
                 <button id="btn-close-form-modal" class="text-slate-400 hover:text-slate-600 p-1">
                     <i class="fa-solid fa-xmark text-lg"></i>
@@ -271,7 +271,7 @@
                         <input type="password" id="input-password" required placeholder="Parol" class="w-full px-3 py-2 bg-surface border border-border rounded-xl text-xs focus:ring-2 focus:ring-primary/20 focus:outline-none">
                     </div>
                 </div>
-                <button type="submit" id="btn-submit-form" class="w-full py-3 bg-primary text-white font-bold text-xs rounded-xl shadow-md hover:bg-primary-dark transition mt-2">
+                <button type="submit" id="btn-submit-form" class="w-full py-2.5 sm:py-3 bg-primary text-white font-bold text-xs rounded-xl shadow-md hover:bg-primary-dark transition mt-2">
                     Saqlash
                 </button>
             </form>

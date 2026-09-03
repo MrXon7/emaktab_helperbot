@@ -1,4 +1,4 @@
-﻿// Telegram WebApp Initialization
+// Telegram WebApp Initialization
 const tg = window.Telegram?.WebApp;
 if (tg) {
     tg.ready();
@@ -403,38 +403,47 @@ function renderStudents() {
         const initials = student.name.charAt(0).toUpperCase();
 
         return `
-            <div class="bg-white rounded-2xl p-3.5 border ${borderClass} shadow-sm transition hover:shadow-md flex items-center justify-between space-x-2.5">
-                <div class="flex items-center space-x-3 min-w-0">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white font-bold flex items-center justify-center text-sm shadow-sm shrink-0">
-                        ${initials}
+            <div class="bg-white rounded-2xl p-2.5 sm:p-3 border ${borderClass} shadow-sm transition hover:shadow-md space-y-2">
+                <!-- Yuqori qator: Ism, Maktab va Status -->
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center space-x-2.5 min-w-0 flex-1">
+                        <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white font-bold flex items-center justify-center text-xs sm:text-sm shadow-sm shrink-0">
+                            ${initials}
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <h4 class="text-xs sm:text-[13px] font-bold text-slate-900 truncate leading-snug">${student.name}</h4>
+                            <div class="flex items-center space-x-1.5 text-[10px] sm:text-[11px] text-slate-500 mt-0.5">
+                                <span class="bg-slate-100 px-1.5 py-0.2 rounded font-semibold text-slate-700 shrink-0">${student.grade}</span>
+                                <span class="shrink-0">•</span>
+                                <span class="truncate">${student.schoolName}</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="min-w-0">
-                        <div class="flex items-center space-x-1.5">
-                            <h4 class="text-xs font-bold text-slate-900 truncate">${student.name}</h4>
-                        </div>
-                        <div class="flex items-center space-x-1.5 text-[11px] text-slate-500 mt-0.5">
-                            <span class="bg-slate-100 px-1.5 py-0.2 rounded font-semibold text-slate-700">${student.grade}</span>
-                            <span>•</span>
-                            <span class="truncate max-w-[110px]">${student.schoolName}</span>
-                        </div>
-                        ${student.message ? `<p class="text-[10px] text-rose-500 font-medium truncate mt-0.5">${student.message}</p>` : ''}
+                    <div class="shrink-0">
+                        ${statusBadge}
                     </div>
                 </div>
 
-                <div class="flex items-center space-x-1.5 shrink-0">
-                    ${statusBadge}
-                    <!-- Tahrirlash -->
-                    <button onclick="editStudent('${student.id}')" class="p-2 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-500 hover:text-emerald-600 transition" title="Tahrirlash">
-                        <i class="fa-solid fa-pen-to-square text-xs"></i>
-                    </button>
-                    <!-- Kirish -->
-                    <button onclick="startSingleLogin('${student.id}')" class="p-2 rounded-xl bg-slate-50 hover:bg-blue-50 text-slate-500 hover:text-primary transition" title="Kirish">
-                        <i class="fa-solid fa-play text-xs"></i>
-                    </button>
-                    <!-- O'chirish -->
-                    <button onclick="deleteStudent('${student.id}')" class="p-2 rounded-xl bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-500 transition" title="O'chirish">
-                        <i class="fa-solid fa-trash-can text-xs"></i>
-                    </button>
+                <!-- Pastki qator: Status xabari va Harakat tugmalari -->
+                <div class="flex items-center justify-between pt-1.5 border-t border-slate-100/80 gap-2">
+                    <div class="min-w-0 flex-1">
+                        ${student.message ? `<p class="text-[10px] text-rose-500 font-medium truncate" title="${student.message}"><i class="fa-solid fa-circle-info mr-1"></i>${student.message}</p>` : `<span class="text-[10px] text-slate-400 font-mono truncate block">${student.login}</span>`}
+                    </div>
+                    <div class="flex items-center space-x-1 shrink-0">
+                        <!-- Kirish -->
+                        <button onclick="startSingleLogin('${student.id}')" class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-primary font-bold text-[10px] transition flex items-center space-x-1 active:scale-95" title="Kirish">
+                            <i class="fa-solid fa-play text-[8px]"></i>
+                            <span>Kirish</span>
+                        </button>
+                        <!-- Tahrirlash -->
+                        <button onclick="editStudent('${student.id}')" class="p-1.5 rounded-lg bg-slate-50 hover:bg-emerald-50 text-slate-500 hover:text-emerald-600 transition active:scale-95" title="Tahrirlash">
+                            <i class="fa-solid fa-pen-to-square text-[10px]"></i>
+                        </button>
+                        <!-- O'chirish -->
+                        <button onclick="deleteStudent('${student.id}')" class="p-1.5 rounded-lg bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-500 transition active:scale-95" title="O'chirish">
+                            <i class="fa-solid fa-trash-can text-[10px]"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         `;
