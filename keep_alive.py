@@ -2,22 +2,25 @@ import os
 import time
 import logging
 import threading
-import requests
-from flask import Flask, jsonify
+import urllib.request
 
 logger = logging.getLogger(__name__)
 
-# Flask veb-serveri
-flask_app = Flask(__name__)
+# Ixtiyoriy: agar kimdir Flask ni alohida ishlatmoqchi bo'lsa
+try:
+    from flask import Flask, jsonify
+    flask_app = Flask(__name__)
 
-@flask_app.route('/')
-@flask_app.route('/ping')
-def home():
-    return jsonify({
-        "status": "ok",
-        "service": "eMaktab Helper Keep-Alive",
-        "message": "Server faol ishlamoqda"
-    })
+    @flask_app.route('/')
+    @flask_app.route('/ping')
+    def home():
+        return jsonify({
+            "status": "ok",
+            "service": "eMaktab Helper Keep-Alive",
+            "message": "Server faol ishlamoqda"
+        })
+except ImportError:
+    flask_app = None
 
 def ping_loop():
     """
@@ -26,6 +29,7 @@ def ping_loop():
     
     Alohida fondagi oqimda (Thread) ishlagani sababli asosiy FastAPI 
     va Telegram botning ishlashiga hech qanday og'irlik yoki qotish keltirib chiqarmaydi.
+    Faqat Python standart kutubxonasi (urllib) ishlatiladi.
     """
     time.sleep(20)  # Server to'liq ishga tushib olishi uchun kutish
     
@@ -38,8 +42,9 @@ def ping_loop():
             raw_url = os.getenv("WEBAPP_URL", "https://emaktab-helperbot.onrender.com").rstrip('/')
             if raw_url and "localhost" not in raw_url and "127.0.0.1" not in raw_url:
                 target_url = f"{raw_url}/health"
-                resp = requests.get(target_url, headers=headers, timeout=15)
-                logger.info(f"⏰ [Keep-Alive Thread] Ping muvaffaqiyatli: {target_url} (Status: {resp.status_code})")
+                req = urllib.request.Request(target_url, headers=headers)
+                with urllib.request.urlopen(req, timeout=15) as resp:
+                    logger.info(f"⏰ [Keep-Alive Thread] Ping muvaffaqiyatli: {target_url} (Status: {resp.status})")
         except Exception as e:
             logger.warning(f"⚠️ [Keep-Alive Thread] Ping xatosi: {e}")
 
@@ -58,8 +63,9 @@ def keep_alive():
 
 def run_flask():
     """Flask serverini alohida ishga tushirish (agar mustaqil rejimda kerak bo'lsa)"""
-    port = int(os.getenv("FLASK_PORT", 8080))
-    flask_app.run(host="0.0.0.0", port=port)
+    if flask_app:
+        port = int(os.getenv("FLASK_PORT", 8080))
+        flask_app.run(host="0.0.0.0", port=port)
 
 if __name__ == "__main__":
     keep_alive()
