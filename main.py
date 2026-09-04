@@ -14,39 +14,19 @@ from sqlalchemy.orm import Session
 from aiogram import types
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment
-import httpx
-
 from config import settings
 from bot import bot, dp
 from database import init_db, get_db, User, Student
 from auth import get_current_user
 from emaktab_service import EmaktabService
 from excel_parser import ExcelParser
+from keep_alive import keep_alive
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
-
-async def keep_alive_task():
-    """
-    Render.com da serverni uxlab qolishdan saqlash uchun 
-    har 10 daqiqada (600s) o'zining /health manziliga so'rov yuborib turadi.
-    """
-    await asyncio.sleep(30) # Dastlabki 30 soniya kutish
-    while True:
-        try:
-            if settings.WEBAPP_URL and "localhost" not in settings.WEBAPP_URL and "127.0.0.1" not in settings.WEBAPP_URL:
-                health_url = f"{settings.WEBAPP_URL.rstrip('/')}/health"
-                async with httpx.AsyncClient(timeout=15.0) as client:
-                    r = await client.get(health_url)
-                    logger.info(f"⏰ [Self-Ping] Server uyg'oq saqlandi: {health_url} (Status: {r.status_code})")
-        except Exception as e:
-            logger.warning(f"⚠️ [Self-Ping] Xatolik: {e}")
-        
-        # Har 10 daqiqada takrorlanadi (Render 15 daqiqada uxlaydi)
-        await asyncio.sleep(600)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -60,21 +40,19 @@ async def lifespan(app: FastAPI):
     if bot and settings.BOT_TOKEN:
         webhook_url = f"{settings.WEBAPP_URL.rstrip('/')}/webhook"
         try:
-            await bot.set_webhook(url=webhook_url, drop_pending_updates=True)
+            await bot.set_webhook(url=webhook_url, drop_pending_updates=False)
             logger.info(f"Telegram Webhook o'rnatildi: {webhook_url}")
         except Exception as e:
             logger.warning(f"Webhook o'rnatilmadi: {e}")
-    
-    # 3. O'zini-o'zi uyg'oq saqlash fon vazifasini ishga tushirish
-    ping_task = asyncio.create_task(keep_alive_task())
+
+    # 3. Har 5 daqiqada serverni uyg'oq tutuvchi Keep-Alive oqimini ishga tushirish
+    keep_alive()
 
     yield
     
     # Shutdown
-    ping_task.cancel()
     if bot and settings.BOT_TOKEN:
         try:
-            await bot.delete_webhook()
             await bot.session.close()
             logger.info("Telegram Bot sessiyasi yopildi.")
         except Exception as e:
@@ -322,10 +300,9 @@ async def telegram_webhook(request: Request):
         data = await request.json()
         update = types.Update(**data)
         await dp.feed_update(bot, update)
-        return JSONResponse({"status": "ok"})
     except Exception as e:
         logger.error(f"Webhook xatosi: {e}")
-        return JSONResponse({"error": str(e)}, status_code=500)
+    return JSONResponse({"status": "ok"})
 
 if __name__ == "__main__":
     import uvicorn
