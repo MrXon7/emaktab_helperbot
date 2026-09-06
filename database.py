@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from sqlalchemy import create_engine, Column, String, Integer, BigInteger, DateTime, ForeignKey, Text
+from sqlalchemy import create_engine, Column, String, Integer, BigInteger, DateTime, ForeignKey, Text, text
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 from config import settings
 
@@ -74,13 +74,32 @@ class Student(Base):
             "successAt": self.success_at
         }
 
+def _run_migrations():
+    """
+    Mavjud jadvalga yangi ustunlarni xavfsiz qo'shish (idempotent).
+    'IF NOT EXISTS' sintaksisi yordamida bir necha marta chaqirsa ham xatolik bermaydi.
+    """
+    migrations = [
+        "ALTER TABLE students ADD COLUMN IF NOT EXISTS parent_login VARCHAR(255)",
+        "ALTER TABLE students ADD COLUMN IF NOT EXISTS parent_password VARCHAR(255)",
+    ]
+    try:
+        with engine.begin() as conn:
+            for stmt in migrations:
+                conn.execute(text(stmt))
+        logger.info("Migration muvaffaqiyatli bajarildi (parent_login, parent_password ustunlari tayyor).")
+    except Exception as e:
+        logger.error(f"Migration xatosi: {e}")
+        raise e
+
 def init_db():
-    """Bazada jadvallarni avtomatik yaratish"""
+    """Bazada jadvallarni avtomatik yaratish va migratsiyalarni ishga tushirish"""
     try:
         Base.metadata.create_all(bind=engine)
         logger.info("Supabase jadvallari (users, students) tayyorlandi.")
+        _run_migrations()
     except Exception as e:
-        logger.error(f"Jadvallarni yaratishda xato: {e}")
+        logger.error(f"Jadvallarni yaratishda yoki migratsiyada xato: {e}")
         raise e
 
 def get_db():
