@@ -213,12 +213,16 @@ function openStudentForm(student = null) {
         document.getElementById('input-grade').value = student.grade;
         document.getElementById('input-login').value = student.login;
         document.getElementById('input-password').value = student.password;
+        document.getElementById('input-parent-login').value = student.parentLogin || '';
+        document.getElementById('input-parent-password').value = student.parentPassword || '';
     } else {
         modalFormTitle.textContent = 'Yangi o\'quvchi qo\'shish';
         inputEditId.value = '';
         formStudent.reset();
         document.getElementById('input-school').value = 'Maktab';
         document.getElementById('input-grade').value = '1-A';
+        document.getElementById('input-parent-login').value = '';
+        document.getElementById('input-parent-password').value = '';
     }
     modalStudentForm.classList.remove('hidden');
     triggerHaptic();
@@ -240,7 +244,9 @@ formStudent.addEventListener('submit', async (e) => {
         schoolName: document.getElementById('input-school').value.trim() || 'Maktab',
         grade: document.getElementById('input-grade').value.trim() || '1-A',
         login: document.getElementById('input-login').value.trim(),
-        password: document.getElementById('input-password').value.trim()
+        password: document.getElementById('input-password').value.trim(),
+        parentLogin: document.getElementById('input-parent-login').value.trim(),
+        parentPassword: document.getElementById('input-parent-password').value.trim()
     };
 
     try {
@@ -407,6 +413,22 @@ function renderStudents() {
 
         const initials = student.name.charAt(0).toUpperCase();
 
+        let messageHtml = '';
+        if (student.message) {
+            if (student.status === 'success') {
+                messageHtml = `<p class="text-[10px] text-emerald-600 font-semibold truncate" title="${student.message}"><i class="fa-solid fa-circle-check mr-1 text-[9px]"></i>${student.message}</p>`;
+            } else if (student.status === 'failed') {
+                messageHtml = `<p class="text-[10px] text-rose-500 font-medium truncate" title="${student.message}"><i class="fa-solid fa-circle-exclamation mr-1 text-[9px]"></i>${student.message}</p>`;
+            } else if (student.status === 'processing') {
+                messageHtml = `<p class="text-[10px] text-blue-500 font-medium truncate" title="${student.message}"><i class="fa-solid fa-spinner fa-spin mr-1 text-[9px]"></i>${student.message}</p>`;
+            } else {
+                messageHtml = `<p class="text-[10px] text-slate-500 font-medium truncate" title="${student.message}"><i class="fa-solid fa-circle-info mr-1 text-[9px]"></i>${student.message}</p>`;
+            }
+        } else {
+            const parentText = student.parentLogin ? ` | Ota-ona: ${student.parentLogin}` : '';
+            messageHtml = `<span class="text-[10px] text-slate-400 font-mono truncate block" title="O'quvchi: ${student.login}${parentText}">Login: ${student.login}${parentText}</span>`;
+        }
+
         return `
             <div class="bg-white rounded-2xl p-2.5 sm:p-3 border ${borderClass} shadow-sm transition hover:shadow-md space-y-2">
                 <!-- Yuqori qator: Ism, Maktab va Status -->
@@ -421,6 +443,10 @@ function renderStudents() {
                                 <span class="bg-slate-100 px-1.5 py-0.2 rounded font-semibold text-slate-700 shrink-0">${student.grade}</span>
                                 <span class="shrink-0">•</span>
                                 <span class="truncate">${student.schoolName}</span>
+                                <span class="shrink-0">•</span>
+                                ${student.parentLogin 
+                                    ? `<span class="text-emerald-600 font-semibold shrink-0" title="Ota-ona logini: ${student.parentLogin}"><i class="fa-solid fa-user-group text-[9px] mr-0.5"></i>Ota-ona bor</span>` 
+                                    : `<span class="text-slate-400 shrink-0" title="Ota-ona kiritilmagan"><i class="fa-solid fa-user-xmark text-[9px] mr-0.5"></i>Ota-onasiz</span>`}
                             </div>
                         </div>
                     </div>
@@ -432,7 +458,7 @@ function renderStudents() {
                 <!-- Pastki qator: Status xabari va Harakat tugmalari -->
                 <div class="flex items-center justify-between pt-1.5 border-t border-slate-100/80 gap-2">
                     <div class="min-w-0 flex-1">
-                        ${student.message ? `<p class="text-[10px] text-rose-500 font-medium truncate" title="${student.message}"><i class="fa-solid fa-circle-info mr-1"></i>${student.message}</p>` : `<span class="text-[10px] text-slate-400 font-mono truncate block">${student.login}</span>`}
+                        ${messageHtml}
                     </div>
                     <div class="flex items-center space-x-1 shrink-0">
                         <!-- Kirish -->

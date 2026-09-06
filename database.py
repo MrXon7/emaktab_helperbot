@@ -1,4 +1,4 @@
-﻿import logging
+import logging
 from datetime import datetime
 from sqlalchemy import create_engine, Column, String, Integer, BigInteger, DateTime, ForeignKey, Text
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
@@ -49,6 +49,8 @@ class Student(Base):
     grade = Column(String(50), default="1-A")
     login = Column(String(255), nullable=False)
     password = Column(String(255), nullable=False)
+    parent_login = Column(String(255), nullable=True)
+    parent_password = Column(String(255), nullable=True)
     status = Column(String(50), default="pending")  # 'pending', 'success', 'failed'
     message = Column(Text, default="")
     success_at = Column(BigInteger, nullable=True)  # Timestamp ms
@@ -65,6 +67,8 @@ class Student(Base):
             "grade": self.grade,
             "login": self.login,
             "password": self.password,
+            "parentLogin": self.parent_login or "",
+            "parentPassword": self.parent_password or "",
             "status": self.status,
             "message": self.message or "",
             "successAt": self.success_at

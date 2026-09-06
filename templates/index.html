@@ -276,14 +276,34 @@
                 </div>
                 <div class="grid grid-cols-2 gap-2">
                     <div>
-                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Login</label>
-                        <input type="text" id="input-login" required placeholder="Login" class="w-full px-3 py-2 bg-surface border border-border rounded-xl text-xs focus:ring-2 focus:ring-primary/20 focus:outline-none">
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">O'quvchi Logini</label>
+                        <input type="text" id="input-login" required placeholder="O'quvchi logini" class="w-full px-3 py-2 bg-surface border border-border rounded-xl text-xs focus:ring-2 focus:ring-primary/20 focus:outline-none">
                     </div>
                     <div>
-                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Parol</label>
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">O'quvchi Paroli</label>
                         <input type="password" id="input-password" required placeholder="Parol" class="w-full px-3 py-2 bg-surface border border-border rounded-xl text-xs focus:ring-2 focus:ring-primary/20 focus:outline-none">
                     </div>
                 </div>
+                
+                <!-- Ota-ona ma'lumotlari -->
+                <div class="pt-2 border-t border-dashed border-slate-200">
+                    <div class="flex items-center space-x-1.5 mb-1.5 text-slate-700">
+                        <i class="fa-solid fa-user-group text-xs text-primary"></i>
+                        <span class="text-[11px] font-bold">Ota-ona ma'lumotlari</span>
+                        <span class="text-[9px] text-slate-400 font-normal">(ixtiyoriy)</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[10px] font-semibold text-slate-500 mb-1">Ota-ona Logini</label>
+                            <input type="text" id="input-parent-login" placeholder="Ota/Ona logini" class="w-full px-3 py-2 bg-surface border border-border rounded-xl text-xs focus:ring-2 focus:ring-primary/20 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-semibold text-slate-500 mb-1">Ota-ona Paroli</label>
+                            <input type="password" id="input-parent-password" placeholder="Parol" class="w-full px-3 py-2 bg-surface border border-border rounded-xl text-xs focus:ring-2 focus:ring-primary/20 focus:outline-none">
+                        </div>
+                    </div>
+                </div>
+
                 <button type="submit" id="btn-submit-form" class="w-full py-2.5 sm:py-3 bg-primary text-white font-bold text-xs rounded-xl shadow-md hover:bg-primary-dark transition mt-2">
                     Saqlash
                 </button>

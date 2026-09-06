@@ -1,4 +1,4 @@
-﻿import io
+import io
 import uuid
 import openpyxl
 
@@ -11,8 +11,10 @@ class ExcelParser:
         A -> Ism (F.I.Sh)
         B -> Maktab nomi
         C -> Sinf
-        D -> Login
-        E -> Parol
+        D -> O'quvchi Logini
+        E -> O'quvchi Paroli
+        F -> Ota-ona Logini
+        G -> Ota-ona Paroli
         """
         workbook = openpyxl.load_workbook(io.BytesIO(file_bytes), data_only=True)
         sheet = workbook.active
@@ -35,10 +37,11 @@ class ExcelParser:
             grade = str(row[2]).strip() if len(row) > 2 and row[2] is not None else "1-A"
             login = str(row[3]).strip() if len(row) > 3 and row[3] is not None else ""
             password = str(row[4]).strip() if len(row) > 4 and row[4] is not None else ""
+            parent_login = str(row[5]).strip() if len(row) > 5 and row[5] is not None else ""
+            parent_password = str(row[6]).strip() if len(row) > 6 and row[6] is not None else ""
 
-            # Agar login boshqa ustunda kelsa
+            # Agar login boshqa ustunda kelsa (oddiy 2-3 ustunli fayl)
             if not login and len(row) >= 2:
-                # Agar 2 ta ustun bo'lsa: [Name, Login] yoki [Login, Password]
                 login = str(row[1]).strip() if row[1] is not None else ""
                 password = str(row[2]).strip() if len(row) > 2 and row[2] is not None else "12345"
 
@@ -50,6 +53,8 @@ class ExcelParser:
                     "grade": grade if grade else "Sinf",
                     "login": login,
                     "password": password,
+                    "parentLogin": parent_login,
+                    "parentPassword": parent_password,
                     "status": "pending",
                     "message": ""
                 })

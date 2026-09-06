@@ -42,37 +42,17 @@ async def handle_help(message: types.Message):
     help_text = (
         "💡 <b>Qanday ishlatiladi?</b>\n\n"
         "1. <b>'EduFlow Avto ni ochish'</b> tugmasini bosing;\n"
-        "2. Excel (.xlsx) faylni yuklang yoki qo'lda o'quvchi kiriting;\n"
+        "2. Mini App ichidagi <b>'Excel Import'</b> bo'limi orqali namunani yuklab oling yoki tayyor Excel faylni kiriting;\n"
         "3. <b>'AVTOMATIK KIRISH'</b> tugmasini bosing;\n"
-        "4. Tizim o'zi barcha o'quvchilarga kirib, hisobotni ko'rsatadi.\n\n"
-        "<i>Shuningdek, Excel faylni to'g'ridan-to'g'ri shu botga yuborishingiz ham mumkin!</i>"
+        "4. Tizim avval o'quvchi, keyin ota-ona profiliga kirib, to'liq hisobotni ko'rsatadi."
     )
     await message.answer(help_text, reply_markup=get_main_keyboard(), parse_mode="HTML")
 
 @dp.message(F.document)
 async def handle_excel_document(message: types.Message):
-    doc = message.document
-    if not doc.file_name.endswith(('.xlsx', '.xls')):
-        await message.answer("⚠️ Iltimos, faqat <b>.xlsx</b> formatidagi Excel fayl yuboring!", parse_mode="HTML")
-        return
-
-    wait_msg = await message.answer("⏳ Excel fayl tahlil qilinmoqda...")
-    
-    try:
-        file_obj = await bot.get_file(doc.file_id)
-        file_bytes = await bot.download_file(file_obj.file_path)
-        students = ExcelParser.parse_excel_bytes(file_bytes.read())
-
-        if not students:
-            await wait_msg.edit_text("❌ Fayldan o'quvchilar topilmadi. Ustunlar to'g'riligini tekshiring.")
-            return
-
-        success_text = (
-            f"✅ <b>{len(students)} ta</b> o'quvchi muvaffaqiyatli aniqlandi!\n\n"
-            f"📋 Jarayonni boshlash uchun Web App ni oching:"
-        )
-        await wait_msg.edit_text(success_text, reply_markup=get_main_keyboard(), parse_mode="HTML")
-
-    except Exception as e:
-        logger.exception(f"Fayl yuklashda xatolik: {e}")
-        await wait_msg.edit_text(f"❌ Xatolik yuz berdi: {e}")
+    info_text = (
+        "⚠️ <b>Excel fayllarni bot chatiga yubormang!</b>\n\n"
+        "Barcha amallar, jumladan Excel import qilish, namuna faylni yuklab olish va o'quvchilarga kirish <b>EduFlow Avto</b> Mini App ichida amalga oshiriladi.\n\n"
+        "👇 Iltimos, pastdagi tugmani bosib dasturga kiring va <b>'Excel Import'</b> bo'limidan foydalaning:"
+    )
+    await message.answer(info_text, reply_markup=get_main_keyboard(), parse_mode="HTML")

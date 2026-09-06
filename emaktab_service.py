@@ -1,4 +1,4 @@
-﻿import re
+import re
 import io
 import uuid
 import json
@@ -105,33 +105,26 @@ class EmaktabService:
         return result
 
     @classmethod
-    async def process_student_login(cls, student: dict, max_captcha_retries: int = 3) -> dict:
-        student_id = student.get("id", "")
-        name = student.get("name", "Noma'lum")
-        login = student.get("login", "").strip()
-        password = student.get("password", "").strip()
-
+    async def _login_account(
+        cls, 
+        person_name: str, 
+        login: str, 
+        password: str, 
+        account_role: str = "O'quvchi", 
+        max_captcha_retries: int = 3
+    ) -> tuple[bool, str]:
+        """Bitta hisob (o'quvchi yoki ota-ona) ga toza sessiyada kirishga urinadi."""
         if not login or not password:
-            return {
-                "id": student_id,
-                "name": name,
-                "status": "failed",
-                "message": "Login yoki parol kiritilmagan"
-            }
+            return False, f"{account_role} logini yoki paroli kiritilmagan"
 
         async with httpx.AsyncClient(headers=cls.HEADERS, follow_redirects=True, timeout=25.0) as client:
             try:
                 # 1. Boshlang'ich sahifaga kirish
-                logger.info(f"[{name}] 1. Bosh sahifa ochilmoqda...")
+                logger.info(f"[{person_name} - {account_role}] 1. Bosh sahifa ochilmoqda...")
                 r_init = await client.get(cls.LOGIN_PAGE_URL)
                 
                 if r_init.status_code != 200:
-                    return {
-                        "id": student_id,
-                        "name": name,
-                        "status": "failed",
-                        "message": f"Login sahifasi ochilmadi (Status: {r_init.status_code})"
-                    }
+                    return False, f"Login sahifasi ochilmadi (Status: {r_init.status_code})"
 
                 # Bosh sahifada Captcha kerakmi yoki yo'qligini tekshirish
                 init_analysis = cls._parse_login_response(r_init.text)
@@ -141,7 +134,7 @@ class EmaktabService:
                 # 2. AGAR CAPTCHA TALAB QILINMASA -> Dastlab Captchasiz urinib ko'ramiz
                 # -------------------------------------------------------------
                 if not needs_captcha:
-                    logger.info(f"[{name}] 2. Captchasiz to'g'ridan-to'g'ri login urinishi...")
+                    logger.info(f"[{person_name} - {account_role}] 2. Captchasiz to'g'ridan-to'g'ri login urinishi...")
                     form_data = {
                         "exceededAttempts": "False",
                         "ReturnUrl": "",
@@ -156,28 +149,18 @@ class EmaktabService:
                     resp = await client.post(cls.LOGIN_PAGE_URL, data=form_data, headers=post_headers)
                     final_url = str(resp.url)
                     
-                    logger.info(f"[{name}] Captchasiz so'rov natijasi: {resp.status_code}, URL: {final_url}")
+                    logger.info(f"[{person_name} - {account_role}] Captchasiz so'rov natijasi: {resp.status_code}, URL: {final_url}")
 
                     # Muvaffaqiyat tekshiruvi
                     if cls._is_login_successful(final_url, resp.text):
-                        logger.info(f"[{name}] ✅ Muvaffaqiyatli kirildi! URL: {final_url}")
-                        return {
-                            "id": student_id,
-                            "name": name,
-                            "status": "success",
-                            "message": "Tizimga muvaffaqiyatli kirildi"
-                        }
+                        logger.info(f"[{person_name} - {account_role}] ✅ Muvaffaqiyatli kirildi! URL: {final_url}")
+                        return True, "Muvaffaqiyatli kirildi"
 
                     # Xatolik yoki Captcha talabi chiqdimi?
                     analysis = cls._parse_login_response(resp.text)
                     if not analysis["needsCaptcha"] and analysis["firstError"] == "login.login.error.emailorpassword":
-                        logger.info(f"[{name}] ❌ Login yoki parol noto'g'ri")
-                        return {
-                            "id": student_id,
-                            "name": name,
-                            "status": "failed",
-                            "message": "Login yoki parol noto'g'ri"
-                        }
+                        logger.info(f"[{person_name} - {account_role}] ❌ Login yoki parol noto'g'ri")
+                        return False, "Login yoki parol noto'g'ri"
 
                 # -------------------------------------------------------------
                 # 3. AGAR CAPTCHA CHIQSA -> Captcha bilan qayta urinishlar
@@ -186,15 +169,15 @@ class EmaktabService:
                     captcha_id = str(uuid.uuid4())
                     captcha_url = f"https://login.emaktab.uz/captcha/true/{captcha_id}"
                     
-                    logger.info(f"[{name}] 3. Captcha yuklanmoqda ({attempt}-urinish): {captcha_url}")
+                    logger.info(f"[{person_name} - {account_role}] 3. Captcha yuklanmoqda ({attempt}-urinish): {captcha_url}")
                     c_resp = await client.get(captcha_url)
                     
                     if c_resp.status_code != 200 or len(c_resp.content) < 300:
-                        logger.warning(f"[{name}] Captcha yuklanmadi, qayta urinish...")
+                        logger.warning(f"[{person_name} - {account_role}] Captcha yuklanmadi, qayta urinish...")
                         continue
 
                     solved_code = cls.solve_captcha(c_resp.content)
-                    logger.info(f"[{name}] 🧠 Yechilgan Captcha kodi: [{solved_code}]")
+                    logger.info(f"[{person_name} - {account_role}] 🧠 Yechilgan Captcha kodi: [{solved_code}]")
 
                     form_data = {
                         "exceededAttempts": "True",
@@ -214,54 +197,106 @@ class EmaktabService:
                     resp = await client.post(cls.LOGIN_PAGE_URL, data=form_data, headers=post_headers)
                     final_url = str(resp.url)
 
-                    logger.info(f"[{name}] Captcha bilan so'rov natijasi: {resp.status_code}, URL: {final_url}")
+                    logger.info(f"[{person_name} - {account_role}] Captcha bilan so'rov natijasi: {resp.status_code}, URL: {final_url}")
 
                     # Muvaffaqiyat tekshiruvi
                     if cls._is_login_successful(final_url, resp.text):
-                        logger.info(f"[{name}] ✅ Muvaffaqiyatli kirildi! URL: {final_url}")
-                        return {
-                            "id": student_id,
-                            "name": name,
-                            "status": "success",
-                            "message": "Tizimga muvaffaqiyatli kirildi"
-                        }
+                        logger.info(f"[{person_name} - {account_role}] ✅ Muvaffaqiyatli kirildi! URL: {final_url}")
+                        return True, "Muvaffaqiyatli kirildi"
 
                     # Javob tahlili
                     analysis = cls._parse_login_response(resp.text)
-                    logger.info(f"[{name}] Javob tahlili: {analysis}")
+                    logger.info(f"[{person_name} - {account_role}] Javob tahlili: {analysis}")
 
                     if analysis["isWrongCaptcha"]:
-                        logger.info(f"[{name}] ⚠️ Captcha kodi xato bo'ldi, yangisi olinmoqda...")
+                        logger.info(f"[{person_name} - {account_role}] ⚠️ Captcha kodi xato bo'ldi, yangisi olinmoqda...")
                         continue
 
                     if analysis["firstError"] == "login.login.error.emailorpassword":
-                        logger.info(f"[{name}] ❌ Login yoki parol noto'g'ri")
-                        return {
-                            "id": student_id,
-                            "name": name,
-                            "status": "failed",
-                            "message": "Login yoki parol noto'g'ri"
-                        }
+                        logger.info(f"[{person_name} - {account_role}] ❌ Login yoki parol noto'g'ri")
+                        return False, "Login yoki parol noto'g'ri"
 
-                return {
-                    "id": student_id,
-                    "name": name,
-                    "status": "failed",
-                    "message": "Login yoki parol noto'g'ri (yoki Captcha urinishlari tugadi)"
-                }
+                return False, "Login yoki parol noto'g'ri (yoki Captcha urinishlari tugadi)"
 
             except httpx.TimeoutException:
-                return {
-                    "id": student_id,
-                    "name": name,
-                    "status": "failed",
-                    "message": "Ulanish vaqti tugadi (Timeout)"
-                }
+                return False, "Ulanish vaqti tugadi (Timeout)"
             except Exception as e:
-                logger.exception(f"Xatolik: {e}")
+                logger.exception(f"[{person_name} - {account_role}] Xatolik: {e}")
+                return False, f"Texnik xatolik: {str(e)}"
+
+    @classmethod
+    async def process_student_login(cls, student: dict, max_captcha_retries: int = 3) -> dict:
+        """
+        Ketma-ket kirish jarayoni:
+        1. Avval o'quvchi profiliga kiriladi.
+        2. Agar o'quvchi kira olmasa -> DARHOL TO'XTATILADI va ota-onaga urinilmaydi.
+        3. Agar o'quvchi muvaffaqiyatli kirsa va ota-ona logini bor bo'lsa -> Toza sessiyada ota-ona profiliga kiriladi.
+        """
+        student_id = student.get("id", "")
+        name = student.get("name", "Noma'lum")
+        login = student.get("login", "").strip()
+        password = student.get("password", "").strip()
+        parent_login = student.get("parentLogin", "").strip()
+        parent_password = student.get("parentPassword", "").strip()
+
+        # -------------------------------------------------------------
+        # 1-BOSQICH: O'quvchi hisobiga kirish
+        # -------------------------------------------------------------
+        logger.info(f"========== [{name}] 1-BOSQICH: O'quvchi profiliga kirilmoqda ==========")
+        student_ok, student_msg = await cls._login_account(
+            person_name=name,
+            login=login,
+            password=password,
+            account_role="O'quvchi",
+            max_captcha_retries=max_captcha_retries
+        )
+
+        # Agar o'quvchi kira olmasa -> Ota-onaga kirmasdan darhol to'xtatamiz!
+        if not student_ok:
+            logger.warning(f"[{name}] O'quvchi profiliga kirib bo'lmadi: {student_msg}. Ota-onaga urinish to'xtatildi.")
+            return {
+                "id": student_id,
+                "name": name,
+                "status": "failed",
+                "message": f"O'quvchida xatolik: {student_msg}"
+            }
+
+        logger.info(f"[{name}] ✅ O'quvchi profiliga muvaffaqiyatli kirildi!")
+
+        # -------------------------------------------------------------
+        # 2-BOSQICH: Ota-ona hisobiga kirish (agar mavjud bo'lsa)
+        # -------------------------------------------------------------
+        if parent_login and parent_password:
+            logger.info(f"========== [{name}] 2-BOSQICH: Ota-ona profiliga kirilmoqda ==========")
+            parent_ok, parent_msg = await cls._login_account(
+                person_name=name,
+                login=parent_login,
+                password=parent_password,
+                account_role="Ota-ona",
+                max_captcha_retries=max_captcha_retries
+            )
+
+            if not parent_ok:
+                logger.warning(f"[{name}] Ota-ona profiliga kirishda xatolik: {parent_msg}")
                 return {
                     "id": student_id,
                     "name": name,
                     "status": "failed",
-                    "message": f"Texnik xatolik: {str(e)}"
+                    "message": f"O'quvchi kirdi, lekin ota-onada xatolik: {parent_msg}"
                 }
+
+            logger.info(f"[{name}] ✅ Ota-ona profiliga ham muvaffaqiyatli kirildi!")
+            return {
+                "id": student_id,
+                "name": name,
+                "status": "success",
+                "message": "O'quvchi va ota-ona profiliga muvaffaqiyatli kirildi"
+            }
+
+        # Agar ota-ona logini kiritilmagan bo'lsa
+        return {
+            "id": student_id,
+            "name": name,
+            "status": "success",
+            "message": "O'quvchi profiliga muvaffaqiyatli kirildi"
+        }

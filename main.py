@@ -74,12 +74,16 @@ class StudentCreateOrUpdateRequest(BaseModel):
     grade: str = "1-A"
     login: str
     password: str
+    parentLogin: str = ""
+    parentPassword: str = ""
 
 class StudentLoginRequest(BaseModel):
     id: str
     name: str
     login: str
     password: str
+    parentLogin: str = ""
+    parentPassword: str = ""
     schoolName: str = "Maktab"
     grade: str = "1-A"
 
@@ -113,13 +117,21 @@ async def download_template():
     ws = wb.active
     ws.title = "O'quvchilar"
 
-    headers = ["F.I.Sh (Ism Familiya)", "Maktab", "Sinf", "Login", "Parol"]
+    headers = [
+        "F.I.Sh (Ism Familiya)", 
+        "Maktab", 
+        "Sinf", 
+        "O'quvchi Logini", 
+        "O'quvchi Paroli", 
+        "Ota-ona Logini", 
+        "Ota-ona Paroli"
+    ]
     ws.append(headers)
 
     samples = [
-        ["Aliyev Vali G'aniyevich", "56-Maktab", "5-A", "ali_valiyev_5a", "Parol123!"],
-        ["Karimova Madina Rustam qizi", "56-Maktab", "5-A", "madina_k_5a", "Madina2026"],
-        ["Toshmatov Dilshod Akrom o'g'li", "56-Maktab", "6-B", "dilshod_t_6b", "Dilshod_123"]
+        ["Aliyev Vali G'aniyevich", "56-Maktab", "5-A", "ali_valiyev_5a", "Parol123!", "ota_valiyev_5a", "OtaParol123!"],
+        ["Karimova Madina Rustam qizi", "56-Maktab", "5-A", "madina_k_5a", "Madina2026", "ona_karimova_5a", "OnaParol2026"],
+        ["Toshmatov Dilshod Akrom o'g'li", "56-Maktab", "6-B", "dilshod_t_6b", "Dilshod_123", "ota_toshmatov_6b", "DilshodOta1"]
     ]
     for row in samples:
         ws.append(row)
@@ -132,7 +144,7 @@ async def download_template():
         cell.fill = header_fill
         cell.font = header_font
         cell.alignment = Alignment(horizontal="center", vertical="center")
-        ws.column_dimensions[openpyxl.utils.get_column_letter(col_idx)].width = 28
+        ws.column_dimensions[openpyxl.utils.get_column_letter(col_idx)].width = 26
 
     stream = io.BytesIO()
     wb.save(stream)
@@ -194,6 +206,8 @@ async def upload_excel(
                 grade=item["grade"],
                 login=item["login"],
                 password=item["password"],
+                parent_login=item.get("parentLogin", "").strip(),
+                parent_password=item.get("parentPassword", "").strip(),
                 status="pending",
                 message=""
             )
@@ -223,6 +237,8 @@ async def create_student(
         grade=req.grade.strip() or "1-A",
         login=req.login.strip(),
         password=req.password.strip(),
+        parent_login=req.parentLogin.strip(),
+        parent_password=req.parentPassword.strip(),
         status="pending",
         message=""
     )
@@ -248,6 +264,8 @@ async def update_student(
     student.grade = req.grade.strip() or "1-A"
     student.login = req.login.strip()
     student.password = req.password.strip()
+    student.parent_login = req.parentLogin.strip()
+    student.parent_password = req.parentPassword.strip()
     student.status = "pending"
     student.message = "Ma'lumotlar tahrirlandi"
     
