@@ -115,6 +115,10 @@ class AdminSettingsUpdateRequest(BaseModel):
 class AdminOrderActionRequest(BaseModel):
     reason: str = ""
 
+class AdminUserExtendRequest(BaseModel):
+    days: int
+    maxStudents: int | None = None
+
 def is_admin_user(user: User) -> bool:
     """Foydalanuvchi admin ekanligini tekshirish"""
     if not user.telegram_id:
@@ -622,6 +626,84 @@ async def admin_get_users(
         prof["studentCount"] = s_count
         result.append(prof)
     return {"users": result}
+
+@app.post("/api/admin/users/{user_id}/extend")
+async def admin_extend_user_subscription(
+    user_id: int,
+    req: AdminUserExtendRequest,
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Sinf rahbar obunasini qo'lda uzaytirish (Admin)"""
+    target_user = db.query(User).filter(User.id == user_id).first()
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Foydalanuvchi topilmadi")
+
+    now = datetime.utcnow()
+    base_date = target_user.expires_at if (target_user.expires_at and target_user.expires_at > now) else now
+    target_user.expires_at = base_date + timedelta(days=req.days)
+    target_user.plan = "active"
+    if req.maxStudents and req.maxStudents > 0:
+        target_user.max_students = req.maxStudents
+    db.commit()
+    db.refresh(target_user)
+
+    # Telegram orqali xabarnoma yuborish
+    if bot and settings.BOT_TOKEN and target_user.telegram_id and not target_user.telegram_id.startswith("dev_"):
+        try:
+            await bot.send_message(
+                int(target_user.telegram_id),
+                f"🎉 <b>Hurmatli o'qituvchi!</b>\n\n"
+                f"Administrator tomonidan obunangiz <b>{req.days} kunga uzaytirildi</b>.\n"
+                f"👨‍🎓 <b>O'quvchilar limiti:</b> {target_user.max_students} ta\n"
+                f"📅 <b>Yangi tugash sanasi:</b> {target_user.expires_at.strftime('%d.%m.%Y')}\n\n"
+                f"EduFlow Avto xizmatidan to'liq foydalanishingiz mumkin!",
+                parse_mode="HTML"
+            )
+        except Exception as e:
+            logger.warning(f"O'qituvchiga uzaytirish xabari bormadi: {e}")
+
+    return {
+        "success": True,
+        "message": f"Obuna {req.days} kunga uzaytirildi",
+        "user": target_user.profile_dict()
+    }
+
+@app.post("/api/admin/users/{user_id}/terminate")
+async def admin_terminate_user_subscription(
+    user_id: int,
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Sinf rahbar obunasini qo'lda to'xtatish / bekor qilish (Admin)"""
+    target_user = db.query(User).filter(User.id == user_id).first()
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Foydalanuvchi topilmadi")
+
+    target_user.plan = "trial"
+    target_user.max_students = 10
+    target_user.expires_at = datetime.utcnow() - timedelta(minutes=1)  # darhol tugagan holat
+    db.commit()
+    db.refresh(target_user)
+
+    # Telegram orqali xabarnoma yuborish
+    if bot and settings.BOT_TOKEN and target_user.telegram_id and not target_user.telegram_id.startswith("dev_"):
+        try:
+            await bot.send_message(
+                int(target_user.telegram_id),
+                f"ℹ️ <b>Hurmatli o'qituvchi!</b>\n\n"
+                f"Obuna muddatingiz administrator tomonidan to'xtatildi.\n"
+                f"Savollaringiz bo'lsa administrator bilan bog'laning: @emaktabro_bot",
+                parse_mode="HTML"
+            )
+        except Exception as e:
+            logger.warning(f"O'qituvchiga to'xtatish xabari bormadi: {e}")
+
+    return {
+        "success": True,
+        "message": "Obuna to'xtatildi",
+        "user": target_user.profile_dict()
+    }
 
 @app.post("/webhook")
 async def telegram_webhook(request: Request):

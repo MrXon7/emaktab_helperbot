@@ -1104,7 +1104,7 @@ async function loadAdminOrders() {
                     <div class="font-bold text-slate-900">${order.userName || 'Foydalanuvchi'}</div>
                     ${statusBadge}
                 </div>
-                <div class="grid grid-cols-2 gap-1 text-[11px] text-slate-600">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 text-[11px] text-slate-600">
                     <div>🏫 <b>Maktab:</b> ${order.schoolName || '—'} ${order.grade || ''}</div>
                     <div>📞 <b>Tel:</b> ${order.phone || '—'}</div>
                     <div>👨‍🎓 <b>O'quvchilar:</b> ${order.studentsCount} ta</div>
@@ -1235,22 +1235,79 @@ async function loadAdminUsers() {
                     : '<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-100 text-rose-700">Bloklangan</span>');
 
             const card = document.createElement('div');
-            card.className = 'p-3 bg-white border border-border rounded-xl shadow-xs space-y-1.5 text-xs';
+            card.className = 'p-3 bg-white border border-border rounded-xl shadow-xs space-y-2 text-xs';
             card.innerHTML = `
                 <div class="flex items-center justify-between">
                     <div class="font-bold text-slate-900">${u.fullName || u.name || 'Sinf rahbar'}</div>
                     ${planBadge}
                 </div>
-                <div class="grid grid-cols-2 gap-1 text-[11px] text-slate-600">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 text-[11px] text-slate-600">
                     <div>🏫 <b>Maktab:</b> ${u.schoolName || '—'} ${u.grade || ''}</div>
                     <div>📞 <b>Tel:</b> ${u.phone || '—'}</div>
                     <div>👨‍🎓 <b>O'quvchilar:</b> ${u.studentCount || 0} / ${u.maxStudents}</div>
                     <div>📅 <b>Tugash:</b> ${u.expiresAt ? u.expiresAt.substring(0, 10) : 'Muddatsiz'}</div>
                 </div>
+                <div class="flex items-center gap-1.5 pt-2 border-t border-slate-100">
+                    <button class="btn-extend-user flex-1 py-1.5 px-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-[11px] font-bold transition active:scale-95 flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-calendar-plus"></i> Uzaytirish
+                    </button>
+                    <button class="btn-terminate-user flex-1 py-1.5 px-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-[11px] font-bold transition active:scale-95 flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-stop"></i> Tugatish
+                    </button>
+                </div>
             `;
+
+            card.querySelector('.btn-extend-user').addEventListener('click', () => adminExtendUser(u.id, u.fullName || u.name));
+            card.querySelector('.btn-terminate-user').addEventListener('click', () => adminTerminateUser(u.id, u.fullName || u.name));
+
             adminUsersList.appendChild(card);
         });
     } catch (err) {
         adminUsersList.innerHTML = `<div class="text-center py-6 text-xs text-rose-500">${err.message}</div>`;
     }
 }
+
+async function adminExtendUser(userId, userName) {
+    const daysStr = prompt(`${userName} uchun obunani necha kunga uzaytirmoqchisiz? (Masalan: 30, 65, 130, 270):`, '65');
+    if (!daysStr) return;
+    const days = parseInt(daysStr);
+    if (isNaN(days) || days <= 0) {
+        showToast("Noto'g'ri kun kiritildi", true);
+        return;
+    }
+
+    const studentsStr = prompt(`${userName} uchun o'quvchilar soni limitini kiriting (bo'sh qoldirsangiz o'zgarmaydi):`, '35');
+    const maxStudents = studentsStr ? parseInt(studentsStr) : null;
+
+    try {
+        const resp = await fetch(`/api/admin/users/${userId}/extend`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ days, maxStudents: isNaN(maxStudents) ? null : maxStudents })
+        });
+        if (!resp.ok) throw new Error('Uzaytirishda xatolik');
+        triggerHaptic('success');
+        showToast(`Obuna ${days} kunga uzaytirildi!`);
+        loadAdminUsers();
+    } catch (err) {
+        showToast(err.message, true);
+    }
+}
+
+async function adminTerminateUser(userId, userName) {
+    if (!confirm(`${userName} ning obunasini to'xtatmoqchimisiz? Foydalanuvchi muddati tugagan holatiga o'tkaziladi.`)) return;
+
+    try {
+        const resp = await fetch(`/api/admin/users/${userId}/terminate`, {
+            method: 'POST',
+            headers: getAuthHeaders()
+        });
+        if (!resp.ok) throw new Error('To\'xtatishda xatolik');
+        triggerHaptic();
+        showToast('Obuna to\'xtatildi');
+        loadAdminUsers();
+    } catch (err) {
+        showToast(err.message, true);
+    }
+}
+
