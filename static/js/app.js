@@ -74,6 +74,15 @@ const subAdminLink = document.getElementById('sub-admin-link');
 const btnCopyCard = document.getElementById('btn-copy-card');
 const btnSubmitOrder = document.getElementById('btn-submit-order');
 
+// Tariff Card Elements
+const tariffCardMonthly = document.getElementById('tariff-card-monthly');
+const tariffCardAcademic = document.getElementById('tariff-card-academic');
+const tariffMonthlyPrice = document.getElementById('tariff-monthly-price');
+const tariffAcademicPrice = document.getElementById('tariff-academic-price');
+const tariffAcademicDaysBadge = document.getElementById('tariff-academic-days-badge');
+const tariffAcademicSubtitle = document.getElementById('tariff-academic-subtitle');
+const academicDaysTag = document.getElementById('academic-days-tag');
+
 // Admin Elements
 const btnOpenAdminPanel = document.getElementById('btn-open-admin-panel');
 const modalAdminPanel = document.getElementById('modal-admin-panel');
@@ -85,6 +94,8 @@ const tabContentOrders = document.getElementById('tab-content-orders');
 const tabContentSettings = document.getElementById('tab-content-settings');
 const tabContentUsers = document.getElementById('tab-content-users');
 const adminOrdersList = document.getElementById('admin-orders-list');
+const adminOrdersFilter = document.getElementById('admin-orders-filter');
+const adminOrdersCountBadge = document.getElementById('admin-orders-count-badge');
 const btnRefreshOrders = document.getElementById('btn-refresh-orders');
 const formAdminSettings = document.getElementById('form-admin-settings');
 const adminInputPrice = document.getElementById('admin-input-price');
@@ -114,10 +125,11 @@ const bulkProgressPercent = document.getElementById('bulk-progress-percent');
 const bulkStatusText = document.getElementById('bulk-status-text');
 
 // Calculation State
+let currentPricePerMonth = 800;
 let currentPricePerQuarter = 2000;
-let selectedQuarters = 1;
-let selectedDurationDays = 65;
+let selectedTariff = 'academic_year'; // 'monthly' yoki 'academic_year'
 let selectedStudentsCount = 30;
+let selectedDurationDays = 260;
 
 // -------------------------------------------------------------
 // 1. MA'LUMOTLARNI SUPABASE BAZASIDAN VA OBUNANI YUKLASH
@@ -813,14 +825,84 @@ function closeSubscriptionModal() {
     }
 }
 
+function getAcademicYearRemainingInfo() {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth(); // 0 = Jan, 4 = May, 8 = Sep
+    const currentDay = now.getDate();
+
+    let targetYear = currentYear;
+    if (currentMonth > 4 || (currentMonth === 4 && currentDay > 25)) {
+        targetYear += 1;
+    }
+    const may25 = new Date(targetYear, 4, 25, 23, 59, 59);
+
+    const diffTime = may25.getTime() - now.getTime();
+    const diffDays = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+    const remainingMonths = Math.max(1, Math.min(9, Math.ceil(diffDays / 30)));
+
+    return {
+        targetYear,
+        days: diffDays,
+        months: remainingMonths,
+        may25Date: may25
+    };
+}
+
+function selectTariff(tariff) {
+    selectedTariff = tariff;
+    if (tariff === 'monthly') {
+        if (tariffCardMonthly) {
+            tariffCardMonthly.className = 'tariff-card active cursor-pointer relative p-3 rounded-2xl border-2 border-primary bg-primary text-white transition shadow-sm flex flex-col justify-between ring-2 ring-primary/20';
+            const title = tariffCardMonthly.querySelector('.font-extrabold');
+            if (title) title.className = 'font-extrabold text-xs text-white';
+            const sub = tariffCardMonthly.querySelector('.text-[10px]');
+            if (sub) sub.className = 'text-[10px] text-blue-100 mt-0.5';
+            if (tariffMonthlyPrice) tariffMonthlyPrice.className = 'text-xs font-black text-white';
+            const badge = tariffCardMonthly.querySelector('span.rounded-lg');
+            if (badge) badge.className = 'px-2 py-0.5 bg-white/20 text-white rounded-lg text-[10px] font-bold';
+        }
+        if (tariffCardAcademic) {
+            tariffCardAcademic.className = 'tariff-card cursor-pointer relative p-3 rounded-2xl border-2 border-border bg-white text-slate-700 hover:border-primary transition shadow-xs flex flex-col justify-between';
+            const title = tariffCardAcademic.querySelector('.font-extrabold');
+            if (title) title.className = 'font-extrabold text-xs text-slate-900';
+            if (tariffAcademicSubtitle) tariffAcademicSubtitle.className = 'text-[10px] text-slate-400 mt-0.5';
+            if (tariffAcademicPrice) tariffAcademicPrice.className = 'text-xs font-black text-slate-900';
+            if (tariffAcademicDaysBadge) tariffAcademicDaysBadge.className = 'px-2 py-0.5 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-bold';
+        }
+    } else {
+        if (tariffCardAcademic) {
+            tariffCardAcademic.className = 'tariff-card active cursor-pointer relative p-3 rounded-2xl border-2 border-primary bg-primary text-white transition shadow-sm flex flex-col justify-between ring-2 ring-primary/20';
+            const title = tariffCardAcademic.querySelector('.font-extrabold');
+            if (title) title.className = 'font-extrabold text-xs text-white';
+            if (tariffAcademicSubtitle) tariffAcademicSubtitle.className = 'text-[10px] text-blue-100 mt-0.5';
+            if (tariffAcademicPrice) tariffAcademicPrice.className = 'text-xs font-black text-white';
+            if (tariffAcademicDaysBadge) tariffAcademicDaysBadge.className = 'px-2 py-0.5 bg-white/20 text-white rounded-lg text-[10px] font-bold backdrop-blur-xs';
+        }
+        if (tariffCardMonthly) {
+            tariffCardMonthly.className = 'tariff-card cursor-pointer relative p-3 rounded-2xl border-2 border-border bg-white text-slate-700 hover:border-primary transition shadow-xs flex flex-col justify-between';
+            const title = tariffCardMonthly.querySelector('.font-extrabold');
+            if (title) title.className = 'font-extrabold text-xs text-slate-900';
+            const sub = tariffCardMonthly.querySelector('.text-[10px]');
+            if (sub) sub.className = 'text-[10px] text-slate-400 mt-0.5';
+            if (tariffMonthlyPrice) tariffMonthlyPrice.className = 'text-xs font-black text-slate-900';
+            const badge = tariffCardMonthly.querySelector('span.rounded-lg');
+            if (badge) badge.className = 'px-2 py-0.5 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-bold';
+        }
+    }
+    triggerHaptic();
+    recalcSubscription();
+}
+
 async function loadPublicSettings() {
     try {
         const resp = await fetch('/api/settings/public');
         if (resp.ok) {
             const data = await resp.json();
+            currentPricePerMonth = data.pricePerStudentMonth || 800;
             currentPricePerQuarter = data.pricePerStudentQuarter || 2000;
             if (rateBadge) {
-                rateBadge.textContent = `1 o'quvchi / 1 chorak: ${currentPricePerQuarter.toLocaleString('uz-UZ')} so'm`;
+                rateBadge.textContent = `1 o'quvchi / 1 oy: ${currentPricePerMonth.toLocaleString('uz-UZ')} so'm`;
             }
             if (subCardNumber) subCardNumber.textContent = data.cardNumber || '9860 1234 5678 9012';
             if (subCardHolder) subCardHolder.textContent = data.cardHolder || 'ADMIN ISM FAMILIYA';
@@ -853,20 +935,13 @@ function initSubscriptionCalculator() {
         });
     }
 
-    // Chorak tanlash tugmalari
-    const quarterBtns = document.querySelectorAll('.quarter-btn');
-    quarterBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            quarterBtns.forEach(b => {
-                b.className = 'quarter-btn py-2 px-1 rounded-xl border border-border bg-white text-slate-700 text-center font-bold text-[10px] hover:border-primary transition shadow-xs';
-            });
-            btn.className = 'quarter-btn active py-2 px-1 rounded-xl border border-primary bg-primary text-white text-center font-bold text-[10px] transition shadow-xs';
-            selectedQuarters = parseInt(btn.dataset.quarters) || 1;
-            selectedDurationDays = parseInt(btn.dataset.days) || 65;
-            triggerHaptic();
-            recalcSubscription();
-        });
-    });
+    // Tarif tanlash kartochkalari
+    if (tariffCardMonthly) {
+        tariffCardMonthly.addEventListener('click', () => selectTariff('monthly'));
+    }
+    if (tariffCardAcademic) {
+        tariffCardAcademic.addEventListener('click', () => selectTariff('academic_year'));
+    }
 
     // Karta raqamidan nusxa olish
     if (btnCopyCard && subCardNumber) {
@@ -888,41 +963,63 @@ function initSubscriptionCalculator() {
 }
 
 function recalcSubscription() {
-    const baseTotal = selectedStudentsCount * currentPricePerQuarter * selectedQuarters;
+    const academicInfo = getAcademicYearRemainingInfo();
 
-    // Chegirmalar:
-    // 1-chorak: 0% (oddiy narx)
-    // 2-chorak: 15% chegirma
-    // 3-chorak: 20% chegirma
-    // 4-chorak: 25% chegirma (4-chorak mutlaqo BEPUL!)
-    let discountPercent = 0;
-    if (selectedQuarters === 2) discountPercent = 15;
-    else if (selectedQuarters === 3) discountPercent = 20;
-    else if (selectedQuarters === 4) discountPercent = 25;
+    // 1. Oylik narx
+    const monthlyBase = selectedStudentsCount * currentPricePerMonth;
 
-    let discountedTotal = baseTotal;
-    let saved = 0;
+    // 2. 25-maygacha o'quv yili pro-rata narxi
+    const academicBase = monthlyBase * academicInfo.months;
+    const discountPercent = academicInfo.months > 1 ? 20 : 0;
+    const academicDiscounted = discountPercent > 0
+        ? Math.round((academicBase * (100 - discountPercent) / 100) / 1000) * 1000
+        : academicBase;
+    const academicSaved = academicBase - academicDiscounted;
 
-    if (discountPercent > 0) {
-        discountedTotal = Math.round((baseTotal * (100 - discountPercent) / 100) / 1000) * 1000;
-        saved = baseTotal - discountedTotal;
+    // UI kartochkalaridagi narxlarni yangilash
+    if (tariffMonthlyPrice) {
+        tariffMonthlyPrice.textContent = `${monthlyBase.toLocaleString('uz-UZ')} so'm`;
+    }
+    if (tariffAcademicPrice) {
+        tariffAcademicPrice.textContent = `${academicDiscounted.toLocaleString('uz-UZ')} so'm`;
+    }
+    if (tariffAcademicDaysBadge) {
+        tariffAcademicDaysBadge.textContent = `${academicInfo.days} kun`;
+    }
+    if (tariffAcademicSubtitle) {
+        tariffAcademicSubtitle.textContent = `25-maygacha (${academicInfo.months} oylik)`;
+    }
+    if (academicDaysTag) {
+        academicDaysTag.textContent = `25-maygacha (${academicInfo.days} kun qoldi)`;
+    }
+
+    // Tanlangan tarif bo'yicha jami summani chiqarish
+    let totalAmount = monthlyBase;
+    let originalAmount = 0;
+    let savedAmount = 0;
+
+    if (selectedTariff === 'monthly') {
+        selectedDurationDays = 30;
+        totalAmount = monthlyBase;
+        originalAmount = 0;
+        savedAmount = 0;
+    } else {
+        selectedDurationDays = academicInfo.days;
+        totalAmount = academicDiscounted;
+        originalAmount = academicBase;
+        savedAmount = academicSaved;
     }
 
     if (calcTotalAmount) {
-        calcTotalAmount.textContent = `${discountedTotal.toLocaleString('uz-UZ')} so'm`;
+        calcTotalAmount.textContent = `${totalAmount.toLocaleString('uz-UZ')} so'm`;
     }
 
     if (calcOriginalAmount && calcDiscountBadge && calcSavedAmount) {
-        if (saved > 0) {
-            calcOriginalAmount.textContent = `${baseTotal.toLocaleString('uz-UZ')} so'm`;
+        if (savedAmount > 0) {
+            calcOriginalAmount.textContent = `${originalAmount.toLocaleString('uz-UZ')} so'm`;
             calcOriginalAmount.classList.remove('hidden');
-            calcSavedAmount.textContent = saved.toLocaleString('uz-UZ');
-
-            if (selectedQuarters === 4) {
-                calcDiscountBadge.innerHTML = `🔥 <b>${saved.toLocaleString('uz-UZ')} so'm tejaldi</b> (4-chorak mutlaqo BEPUL!)`;
-            } else {
-                calcDiscountBadge.innerHTML = `🎉 <b>${saved.toLocaleString('uz-UZ')} so'm tejaldi</b> (${discountPercent}% chegirma)`;
-            }
+            calcSavedAmount.textContent = savedAmount.toLocaleString('uz-UZ');
+            calcDiscountBadge.innerHTML = `🎉 <b>${savedAmount.toLocaleString('uz-UZ')} so'm tejaldi</b> (O'quv yili uchun ${discountPercent}% chegirma)`;
             calcDiscountBadge.classList.remove('hidden');
         } else {
             calcOriginalAmount.classList.add('hidden');
@@ -930,7 +1027,7 @@ function recalcSubscription() {
         }
     }
 
-    return discountedTotal;
+    return totalAmount;
 }
 
 async function handleRegisterAndSubmitOrder() {
@@ -964,14 +1061,16 @@ async function handleRegisterAndSubmitOrder() {
 
         // 2. To'lov so'rovini yuborish
         const totalAmount = recalcSubscription();
+        const academicInfo = getAcademicYearRemainingInfo();
         const orderResp = await fetch('/api/subscription-orders', {
             method: 'POST',
             headers: getAuthHeaders(),
             body: JSON.stringify({
                 studentsCount: selectedStudentsCount,
-                quartersCount: selectedQuarters,
+                quartersCount: selectedTariff === 'monthly' ? 1 : academicInfo.months,
                 durationDays: selectedDurationDays,
-                amountUzs: totalAmount
+                amountUzs: totalAmount,
+                tariffType: selectedTariff
             })
         });
 
@@ -1037,8 +1136,9 @@ function initAdminPanel() {
     if (tabBtnSettings) tabBtnSettings.addEventListener('click', () => switchAdminTab('settings'));
     if (tabBtnUsers) tabBtnUsers.addEventListener('click', () => switchAdminTab('users'));
 
-    // Yangilash tugmalari
+    // Yangilash tugmalari va filtr
     if (btnRefreshOrders) btnRefreshOrders.addEventListener('click', loadAdminOrders);
+    if (adminOrdersFilter) adminOrdersFilter.addEventListener('change', loadAdminOrders);
     if (btnRefreshUsers) btnRefreshUsers.addEventListener('click', loadAdminUsers);
 
     // Sozlamalarni saqlash
@@ -1077,14 +1177,32 @@ async function loadAdminOrders() {
     if (!adminOrdersList) return;
     adminOrdersList.innerHTML = '<div class="text-center py-6 text-xs text-slate-400">Yuklanmoqda...</div>';
 
+    const filterStatus = adminOrdersFilter ? adminOrdersFilter.value : 'pending';
+
     try {
-        const resp = await fetch('/api/admin/orders', { headers: getAuthHeaders() });
+        const resp = await fetch(`/api/admin/orders?status=${encodeURIComponent(filterStatus)}`, { headers: getAuthHeaders() });
         if (!resp.ok) throw new Error('So\'rovlarni yuklab bo\'lmadi');
         const data = await resp.json();
         const orders = data.orders || [];
 
+        if (adminOrdersCountBadge) {
+            if (filterStatus === 'pending') {
+                if (orders.length > 0) {
+                    adminOrdersCountBadge.textContent = `${orders.length} ta`;
+                    adminOrdersCountBadge.classList.remove('hidden');
+                } else {
+                    adminOrdersCountBadge.classList.add('hidden');
+                }
+            } else {
+                adminOrdersCountBadge.classList.add('hidden');
+            }
+        }
+
         if (orders.length === 0) {
-            adminOrdersList.innerHTML = '<div class="text-center py-8 text-xs text-slate-400">To\'lov so\'rovlari mavjud emas.</div>';
+            const emptyMsg = filterStatus === 'pending'
+                ? 'Yangi kutilayotgan to\'lov so\'rovlari mavjud emas.'
+                : 'To\'lov so\'rovlari mavjud emas.';
+            adminOrdersList.innerHTML = `<div class="text-center py-8 text-xs text-slate-400">${emptyMsg}</div>`;
             return;
         }
 
@@ -1097,27 +1215,29 @@ async function loadAdminOrders() {
                     ? '<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-100 text-emerald-700">Tasdiqlangan</span>'
                     : '<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-100 text-rose-700">Rad etilgan</span>');
 
-            const card = document.createElement('div');
-            card.className = 'p-3 bg-white border border-border rounded-xl shadow-xs space-y-2 text-xs';
-            card.innerHTML = `
-                <div class="flex items-center justify-between">
-                    <div class="font-bold text-slate-900">${order.userName || 'Foydalanuvchi'}</div>
-                    ${statusBadge}
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 text-[11px] text-slate-600">
-                    <div>🏫 <b>Maktab:</b> ${order.schoolName || '—'} ${order.grade || ''}</div>
-                    <div>📞 <b>Tel:</b> ${order.phone || '—'}</div>
-                    <div>👨‍🎓 <b>O'quvchilar:</b> ${order.studentsCount} ta</div>
-                    <div>📅 <b>Muddat:</b> ${order.quartersCount}-chorak (${order.durationDays} kun)</div>
-                    <div>💰 <b>To'lov:</b> <span class="font-bold text-emerald-600">${(order.amountUzs || 0).toLocaleString('uz-UZ')} so'm</span></div>
-                    <div>🕒 <b>Vaqt:</b> ${order.createdAt}</div>
-                </div>
+                const tariffName = order.tariffType === 'monthly' ? '1 Oylik (30 kun)' : `25-Maygacha (${order.durationDays} kun)`;
+
+                const card = document.createElement('div');
+                card.className = 'p-3 bg-white border border-border rounded-xl shadow-xs space-y-2 text-xs transition-all duration-300';
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="font-bold text-slate-900">${order.userName || 'Foydalanuvchi'}</div>
+                        ${statusBadge}
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 text-[11px] text-slate-600">
+                        <div>🏫 <b>Maktab:</b> ${order.schoolName || '—'} ${order.grade || ''}</div>
+                        <div>📞 <b>Tel:</b> ${order.phone || '—'}</div>
+                        <div>👨‍🎓 <b>O'quvchilar:</b> ${order.studentsCount} ta</div>
+                        <div>📅 <b>Tarif:</b> ${tariffName}</div>
+                        <div>💰 <b>To'lov:</b> <span class="font-bold text-emerald-600">${(order.amountUzs || 0).toLocaleString('uz-UZ')} so'm</span></div>
+                        <div>🕒 <b>Vaqt:</b> ${order.createdAt}</div>
+                    </div>
                 ${isPending ? `
                     <div class="flex items-center gap-2 pt-2 border-t border-slate-100">
-                        <button class="btn-approve-order flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition active:scale-95" data-id="${order.id}">
+                        <button class="btn-approve-order flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition active:scale-95 flex items-center justify-center gap-1" data-id="${order.id}">
                             <i class="fa-solid fa-check"></i> Tasdiqlash
                         </button>
-                        <button class="btn-reject-order flex-1 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs font-bold transition active:scale-95" data-id="${order.id}">
+                        <button class="btn-reject-order flex-1 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs font-bold transition active:scale-95 flex items-center justify-center gap-1" data-id="${order.id}">
                             <i class="fa-solid fa-xmark"></i> Rad etish
                         </button>
                     </div>
@@ -1125,8 +1245,8 @@ async function loadAdminOrders() {
             `;
 
             if (isPending) {
-                card.querySelector('.btn-approve-order').addEventListener('click', () => adminApproveOrder(order.id));
-                card.querySelector('.btn-reject-order').addEventListener('click', () => adminRejectOrder(order.id));
+                card.querySelector('.btn-approve-order').addEventListener('click', () => adminApproveOrder(order.id, card));
+                card.querySelector('.btn-reject-order').addEventListener('click', () => adminRejectOrder(order.id, card));
             }
 
             adminOrdersList.appendChild(card);
@@ -1136,7 +1256,7 @@ async function loadAdminOrders() {
     }
 }
 
-async function adminApproveOrder(orderId) {
+async function adminApproveOrder(orderId, cardElement) {
     if (!confirm('Ushbu to\'lovni tasdiqlab, obunani faollashtirmoqchimisiz?')) return;
 
     try {
@@ -1147,13 +1267,22 @@ async function adminApproveOrder(orderId) {
         if (!resp.ok) throw new Error('Tasdiqlashda xatolik');
         triggerHaptic('success');
         showToast('Obuna muvaffaqiyatli faollashtirildi!');
-        loadAdminOrders();
+
+        if (cardElement) {
+            cardElement.style.opacity = '0';
+            cardElement.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                loadAdminOrders();
+            }, 250);
+        } else {
+            loadAdminOrders();
+        }
     } catch (err) {
         showToast(err.message, true);
     }
 }
 
-async function adminRejectOrder(orderId) {
+async function adminRejectOrder(orderId, cardElement) {
     const reason = prompt('Rad etish sababini kiriting:', 'To\'lov cheki tasdiqlanmadi');
     if (reason === null) return;
 
@@ -1166,7 +1295,16 @@ async function adminRejectOrder(orderId) {
         if (!resp.ok) throw new Error('Rad etishda xatolik');
         triggerHaptic();
         showToast('So\'rov rad etildi');
-        loadAdminOrders();
+
+        if (cardElement) {
+            cardElement.style.opacity = '0';
+            cardElement.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                loadAdminOrders();
+            }, 250);
+        } else {
+            loadAdminOrders();
+        }
     } catch (err) {
         showToast(err.message, true);
     }
@@ -1177,7 +1315,7 @@ async function loadAdminSettings() {
         const resp = await fetch('/api/admin/settings', { headers: getAuthHeaders() });
         if (resp.ok) {
             const data = await resp.json();
-            if (adminInputPrice) adminInputPrice.value = data.price_per_student_quarter || '2000';
+            if (adminInputPrice) adminInputPrice.value = data.price_per_student_month || data.price_per_student_quarter || '800';
             if (adminInputCard) adminInputCard.value = data.card_number || '';
             if (adminInputHolder) adminInputHolder.value = data.card_holder || '';
             if (adminInputContact) adminInputContact.value = data.admin_telegram_contact || '';
@@ -1190,6 +1328,7 @@ async function loadAdminSettings() {
 async function handleSaveAdminSettings(e) {
     e.preventDefault();
     const payload = {
+        pricePerStudentMonth: adminInputPrice.value.trim(),
         pricePerStudentQuarter: adminInputPrice.value.trim(),
         cardNumber: adminInputCard.value.trim(),
         cardHolder: adminInputHolder.value.trim(),

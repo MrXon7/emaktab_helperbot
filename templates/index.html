@@ -392,14 +392,14 @@
                 </div>
             </div>
 
-            <!-- 2. Choraklik Obuna Kalkulyatori -->
+            <!-- 2. Obuna Tarifini Tanlash -->
             <div class="bg-blue-50/50 rounded-2xl p-3.5 border border-blue-100 space-y-3">
                 <div class="flex flex-wrap items-center justify-between gap-1">
                     <div class="flex items-center gap-1.5 text-xs font-bold text-slate-900">
                         <i class="fa-solid fa-calculator text-primary text-xs"></i>
-                        <span>2. Choraklik Obuna Tanlash</span>
+                        <span>2. Obuna Tarifini Tanlash</span>
                     </div>
-                    <span id="rate-badge" class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">1 o'quvchi / 1 chorak: 2 000 so'm</span>
+                    <span id="rate-badge" class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">1 o'quvchi / 1 oy: 800 so'm</span>
                 </div>
 
                 <!-- O'quvchilar soni -->
@@ -417,32 +417,45 @@
                     </div>
                 </div>
 
-                <!-- Chorak tanlash tugmalari (Mobile: 2x2, Tablet/Desktop: 1x4) -->
+                <!-- Tarif tanlash kartochkalari (1 Oylik vs 25-Maygacha) -->
                 <div>
                     <div class="flex items-center justify-between mb-1.5">
-                        <label class="text-[11px] font-semibold text-slate-700">Obuna muddati (Choraklar):</label>
-                        <span class="text-[10px] font-bold text-emerald-600">Ko'proq muddat = ko'proq chegirma!</span>
+                        <label class="text-[11px] font-semibold text-slate-700">Tarifni tanlang:</label>
+                        <span id="academic-days-tag" class="text-[10px] font-bold text-emerald-600">25-maygacha eng foydali!</span>
                     </div>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2" id="quarter-selector-group">
-                        <button type="button" data-quarters="1" data-days="65" data-discount="0" class="quarter-btn active relative py-2.5 px-2 rounded-xl border border-primary bg-primary text-white text-center font-bold text-xs transition shadow-xs">
-                            <div>1-chorak</div>
-                            <div class="text-[9px] opacity-80 mt-0.5">~65 kun</div>
-                        </button>
-                        <button type="button" data-quarters="2" data-days="130" data-discount="15" class="quarter-btn relative py-2.5 px-2 rounded-xl border border-border bg-white text-slate-700 text-center font-bold text-xs hover:border-primary transition shadow-xs">
-                            <span class="absolute -top-1.5 right-1 px-1.5 text-[8px] font-black bg-rose-500 text-white rounded-full leading-tight">-15%</span>
-                            <div>2 ta chorak</div>
-                            <div class="text-[9px] opacity-80 mt-0.5">Yarim yil</div>
-                        </button>
-                        <button type="button" data-quarters="3" data-days="200" data-discount="20" class="quarter-btn relative py-2.5 px-2 rounded-xl border border-border bg-white text-slate-700 text-center font-bold text-xs hover:border-primary transition shadow-xs">
-                            <span class="absolute -top-1.5 right-1 px-1.5 text-[8px] font-black bg-rose-500 text-white rounded-full leading-tight">-20%</span>
-                            <div>3 ta chorak</div>
-                            <div class="text-[9px] opacity-80 mt-0.5">~200 kun</div>
-                        </button>
-                        <button type="button" data-quarters="4" data-days="270" data-discount="25" class="quarter-btn relative py-2.5 px-2 rounded-xl border border-border bg-white text-slate-700 text-center font-bold text-xs hover:border-primary transition shadow-xs">
-                            <span class="absolute -top-1.5 right-1 px-1.5 text-[8px] font-black bg-emerald-600 text-white rounded-full leading-tight">4-chi BEPUL</span>
-                            <div>4 ta chorak</div>
-                            <div class="text-[9px] opacity-80 mt-0.5">Butun yil</div>
-                        </button>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2" id="tariff-selector-group">
+                        <!-- Variant 1: 1 Oylik -->
+                        <div data-tariff="monthly" id="tariff-card-monthly" class="tariff-card cursor-pointer relative p-3 rounded-2xl border-2 border-border bg-white text-slate-700 hover:border-primary transition shadow-xs flex flex-col justify-between">
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <div class="font-extrabold text-xs text-slate-900">1 Oylik</div>
+                                    <div class="text-[10px] text-slate-400 mt-0.5">30 kunlik to'liq kirish</div>
+                                </div>
+                                <span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-bold">30 kun</span>
+                            </div>
+                            <div class="mt-2.5 pt-2 border-t border-slate-100 flex items-baseline justify-between">
+                                <span class="text-[10px] text-slate-500 font-medium">Summa:</span>
+                                <span id="tariff-monthly-price" class="text-xs font-black text-slate-900">24 000 so'm</span>
+                            </div>
+                        </div>
+
+                        <!-- Variant 2: 25-Maygacha (O'quv yili yakunigacha) -->
+                        <div data-tariff="academic_year" id="tariff-card-academic" class="tariff-card active cursor-pointer relative p-3 rounded-2xl border-2 border-primary bg-primary text-white transition shadow-sm flex flex-col justify-between ring-2 ring-primary/20">
+                            <span class="absolute -top-2 right-2 px-2 py-0.5 text-[8px] font-black bg-amber-400 text-slate-950 rounded-full shadow-xs tracking-wider uppercase">
+                                🏆 -20% CHEGIRMA
+                            </span>
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <div class="font-extrabold text-xs text-white">25-Maygacha</div>
+                                    <div id="tariff-academic-subtitle" class="text-[10px] text-blue-100 mt-0.5">O'quv yili yakunigacha</div>
+                                </div>
+                                <span id="tariff-academic-days-badge" class="px-2 py-0.5 bg-white/20 text-white rounded-lg text-[10px] font-bold backdrop-blur-xs">... kun</span>
+                            </div>
+                            <div class="mt-2.5 pt-2 border-t border-white/20 flex items-baseline justify-between">
+                                <span class="text-[10px] text-blue-100 font-medium">Summa:</span>
+                                <span id="tariff-academic-price" class="text-xs font-black text-white">... so'm</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -452,7 +465,7 @@
                         <span class="text-xs font-semibold text-slate-600">To'lov summasi:</span>
                         <div class="text-right">
                             <span id="calc-original-amount" class="hidden text-xs text-slate-400 line-through mr-1.5"></span>
-                            <span id="calc-total-amount" class="text-sm sm:text-base font-black text-emerald-600">60 000 so'm</span>
+                            <span id="calc-total-amount" class="text-sm sm:text-base font-black text-emerald-600">24 000 so'm</span>
                         </div>
                     </div>
                     <div id="calc-discount-badge" class="hidden text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl px-2.5 py-1 text-center">
@@ -526,10 +539,19 @@
             <!-- Tab 1: So'rovlar ro'yxati -->
             <div id="tab-content-orders" class="space-y-2.5">
                 <div class="flex items-center justify-between text-xs text-slate-500 px-1">
-                    <span class="font-bold">To'lov so'rovlari</span>
-                    <button id="btn-refresh-orders" class="text-primary hover:underline text-[11px] flex items-center gap-1">
-                        <i class="fa-solid fa-rotate"></i> Yangilash
-                    </button>
+                    <div class="flex items-center gap-1.5 min-w-0">
+                        <span class="font-bold text-slate-700">So'rovlar</span>
+                        <span id="admin-orders-count-badge" class="hidden px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-700">0</span>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <select id="admin-orders-filter" class="text-[11px] font-bold bg-slate-100 border border-border rounded-lg px-2 py-0.5 text-slate-700 focus:outline-none">
+                            <option value="pending" selected>Kutilmoqda</option>
+                            <option value="all">Barchasi (Tarix)</option>
+                        </select>
+                        <button id="btn-refresh-orders" class="text-primary hover:underline text-[11px] flex items-center gap-1">
+                            <i class="fa-solid fa-rotate"></i> Yangilash
+                        </button>
+                    </div>
                 </div>
                 <div id="admin-orders-list" class="space-y-2 max-h-[55vh] overflow-y-auto pr-1">
                     <div class="text-center py-8 text-xs text-slate-400">Yuklanmoqda...</div>
@@ -541,10 +563,10 @@
                 <form id="form-admin-settings" class="space-y-3 bg-slate-50 p-3.5 rounded-2xl border border-border">
                     <div>
                         <label class="block text-[11px] font-bold text-slate-700 mb-1">
-                            1 ta o'quvchi uchun 1 choraklik narx (so'm)
+                            1 ta o'quvchi uchun 1 oylik narx (so'm)
                         </label>
-                        <input type="number" id="admin-input-price" required value="2000" class="w-full px-3 py-2 bg-white border border-border rounded-xl text-xs font-bold text-primary focus:ring-2 focus:ring-primary/20 focus:outline-none">
-                        <p class="text-[9px] text-slate-400 mt-0.5">Misol: 2000 so'm (30 o'quvchi 1 chorak = 60 000 so'm)</p>
+                        <input type="number" id="admin-input-price" required value="800" class="w-full px-3 py-2 bg-white border border-border rounded-xl text-xs font-bold text-primary focus:ring-2 focus:ring-primary/20 focus:outline-none">
+                        <p class="text-[9px] text-slate-400 mt-0.5">Misol: 800 so'm (30 o'quvchi 1 oy = 24 000 so'm)</p>
                     </div>
                     <div>
                         <label class="block text-[11px] font-bold text-slate-700 mb-1">Karta raqami (To'lov qabul qilish uchun)</label>

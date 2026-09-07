@@ -135,6 +135,7 @@ class SubscriptionOrder(Base):
     amount_uzs = Column(BigInteger, nullable=False)    # Masalan: 60000 so'm
     status = Column(String(50), default="pending")     # 'pending', 'approved', 'rejected'
     reject_reason = Column(String(255), nullable=True)
+    tariff_type = Column(String(50), default="academic_year") # 'monthly' yoki 'academic_year'
     created_at = Column(DateTime, default=datetime.utcnow)
     processed_at = Column(DateTime, nullable=True)
 
@@ -155,6 +156,7 @@ class SubscriptionOrder(Base):
         return {
             "id": self.id,
             "userId": self.user_id,
+            "tariffType": getattr(self, "tariff_type", None) or ("monthly" if self.duration_days == 30 else "academic_year"),
             "studentsCount": self.students_count,
             "quartersCount": self.quarters_count,
             "durationDays": self.duration_days,
@@ -220,10 +222,12 @@ def _run_migrations():
             amount_uzs BIGINT NOT NULL,
             status VARCHAR(50) DEFAULT 'pending',
             reject_reason VARCHAR(255),
+            tariff_type VARCHAR(50) DEFAULT 'academic_year',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             processed_at TIMESTAMP
         )
         """,
+        "ALTER TABLE subscription_orders ADD COLUMN IF NOT EXISTS tariff_type VARCHAR(50) DEFAULT 'academic_year'",
         # system_settings jadvali
         """
         CREATE TABLE IF NOT EXISTS system_settings (
@@ -234,6 +238,7 @@ def _run_migrations():
     ]
 
     default_settings = {
+        "price_per_student_month": "800",
         "price_per_student_quarter": "2000",
         "card_number": "9860 1234 5678 9012",
         "card_holder": "ADMIN ISM FAMILIYA",

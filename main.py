@@ -102,12 +102,14 @@ class UserRegisterRequest(BaseModel):
 
 class SubscriptionOrderCreateRequest(BaseModel):
     studentsCount: int
-    quartersCount: int
+    quartersCount: int = 1
     durationDays: int
     amountUzs: int
+    tariffType: str = "academic_year" # 'monthly' yoki 'academic_year'
 
 class AdminSettingsUpdateRequest(BaseModel):
-    pricePerStudentQuarter: str
+    pricePerStudentMonth: str | None = None
+    pricePerStudentQuarter: str | None = None
     cardNumber: str
     cardHolder: str
     adminTelegramContact: str
@@ -427,15 +429,22 @@ async def register_profile(
 
 @app.get("/api/settings/public")
 async def get_public_settings(db: Session = Depends(get_db)):
-    """Sinf rahbarlar uchun ommaviy to'lov va choraklik narx sozlamalari"""
-    price_val = SystemSetting.get(db, "price_per_student_quarter", "2000")
+    """Sinf rahbarlar uchun ommaviy to'lov va tarif narx sozlamalari"""
+    month_val = SystemSetting.get(db, "price_per_student_month", "800")
     try:
-        price_num = int(price_val)
+        month_price = int(month_val)
     except ValueError:
-        price_num = 2000
+        month_price = 800
+
+    quarter_val = SystemSetting.get(db, "price_per_student_quarter", "2000")
+    try:
+        quarter_price = int(quarter_val)
+    except ValueError:
+        quarter_price = 2000
 
     return {
-        "pricePerStudentQuarter": price_num,
+        "pricePerStudentMonth": month_price,
+        "pricePerStudentQuarter": quarter_price,
         "cardNumber": SystemSetting.get(db, "card_number", "9860 1234 5678 9012"),
         "cardHolder": SystemSetting.get(db, "card_holder", "ADMIN ISM FAMILIYA"),
         "adminTelegramContact": SystemSetting.get(db, "admin_telegram_contact", "@emaktabro_bot")
@@ -454,6 +463,7 @@ async def create_subscription_order(
         quarters_count=req.quartersCount,
         duration_days=req.durationDays,
         amount_uzs=req.amountUzs,
+        tariff_type=req.tariffType,
         status="pending"
     )
     db.add(order)
@@ -466,6 +476,7 @@ async def create_subscription_order(
         school = user.school_name or "Ko'rsatilmagan"
         grade = user.grade or ""
         phone = user.phone or "Ko'rsatilmagan"
+        tariff_label = "1 Oylik (30 kun)" if req.tariffType == "monthly" else f"25-Maygacha ({req.durationDays} kun)"
         
         notice_text = (
             f"🔔 <b>Yangi to'lov so'rovi!</b>\n\n"
@@ -474,7 +485,7 @@ async def create_subscription_order(
             f"📞 <b>Telefon:</b> {phone}\n"
             f"🆔 <b>Telegram ID:</b> <code>{user.telegram_id}</code>\n"
             f"👨‍🎓 <b>O'quvchilar soni:</b> {req.studentsCount} ta\n"
-            f"📅 <b>Muddat:</b> {req.quartersCount}-chorak ({req.durationDays} kun)\n"
+            f"📦 <b>Tarif:</b> {tariff_label}\n"
             f"💰 <b>To'lov summasi:</b> {req.amountUzs:,} so'm\n\n"
             f"📲 <i>Mini App ichidagi <b>'Admin Boshqaruvi'</b> bo'limidan tasdiqlashingiz mumkin.</i>"
         )
@@ -502,11 +513,16 @@ async def get_my_latest_order(
 
 @app.get("/api/admin/orders")
 async def admin_get_orders(
+    status: str | None = "pending",
     admin: User = Depends(require_admin),
     db: Session = Depends(get_db)
 ):
-    """Barcha to'lov so'rovlari ro'yxati (Admin)"""
-    orders = db.query(SubscriptionOrder).order_by(
+    """To'lov so'rovlari ro'yxati (Admin). Default: faqat 'pending' (kutilayotgan) so'rovlar"""
+    query = db.query(SubscriptionOrder)
+    if status and status != "all":
+        query = query.filter(SubscriptionOrder.status == status)
+
+    orders = query.order_by(
         SubscriptionOrder.created_at.desc()
     ).limit(100).all()
     return {"orders": [o.to_dict() for o in orders]}
@@ -529,8 +545,18 @@ async def admin_approve_order(
     teacher = db.query(User).filter(User.id == order.user_id).first()
     if teacher:
         now = datetime.utcnow()
-        base_date = teacher.expires_at if (teacher.expires_at and teacher.expires_at > now) else now
-        teacher.expires_at = base_date + timedelta(days=order.duration_days)
+        if getattr(order, "tariff_type", "academic_year") == "academic_year":
+            # 25-may sanasini hisoblash
+            target_year = now.year
+            if now.month > 5 or (now.month == 5 and now.day > 25):
+                target_year += 1
+            teacher.expires_at = datetime(target_year, 5, 25, 23, 59, 59)
+            tariff_title = "O'quv yili yakunigacha (25-maygacha)"
+        else:
+            base_date = teacher.expires_at if (teacher.expires_at and teacher.expires_at > now) else now
+            teacher.expires_at = base_date + timedelta(days=order.duration_days)
+            tariff_title = f"{order.duration_days} kunlik (1 oylik)"
+
         teacher.plan = "active"
         teacher.max_students = order.students_count
         db.commit()
@@ -541,9 +567,9 @@ async def admin_approve_order(
                 await bot.send_message(
                     int(teacher.telegram_id),
                     f"🎉 <b>Tabriklaymiz, to'lovingiz tasdiqlandi!</b>\n\n"
-                    f"Obunangiz <b>{order.quarters_count}-chorak</b> ({order.duration_days} kun) ga faollashtirildi.\n"
+                    f"📦 <b>Tarif:</b> {tariff_title}\n"
                     f"👨‍🎓 <b>Ruxsat etilgan o'quvchilar:</b> {order.students_count} ta\n"
-                    f"📅 <b>Tugash sanasi:</b> {teacher.expires_at.strftime('%d.%m.%Y')}\n\n"
+                    f"📅 <b>Amal qilish muddati:</b> {teacher.expires_at.strftime('%d.%m.%Y')}\n\n"
                     f"Endi EduFlow Avto Mini App orqali barcha imkoniyatlardan to'liq foydalanishingiz mumkin!",
                     parse_mode="HTML"
                 )
@@ -593,6 +619,7 @@ async def admin_get_settings(
 ):
     """Barcha tizim sozlamalarini olish (Admin)"""
     return {
+        "price_per_student_month": SystemSetting.get(db, "price_per_student_month", "800"),
         "price_per_student_quarter": SystemSetting.get(db, "price_per_student_quarter", "2000"),
         "card_number": SystemSetting.get(db, "card_number", "9860 1234 5678 9012"),
         "card_holder": SystemSetting.get(db, "card_holder", "ADMIN ISM FAMILIYA"),
@@ -606,7 +633,10 @@ async def admin_update_settings(
     db: Session = Depends(get_db)
 ):
     """Tizim sozlamalari va narxlarini yangilash (Admin)"""
-    SystemSetting.set(db, "price_per_student_quarter", req.pricePerStudentQuarter.strip())
+    if req.pricePerStudentMonth:
+        SystemSetting.set(db, "price_per_student_month", req.pricePerStudentMonth.strip())
+    if req.pricePerStudentQuarter:
+        SystemSetting.set(db, "price_per_student_quarter", req.pricePerStudentQuarter.strip())
     SystemSetting.set(db, "card_number", req.cardNumber.strip())
     SystemSetting.set(db, "card_holder", req.cardHolder.strip())
     SystemSetting.set(db, "admin_telegram_contact", req.adminTelegramContact.strip())
