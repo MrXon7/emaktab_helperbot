@@ -24,6 +24,7 @@ function getAuthHeaders() {
 
 // State
 let students = [];
+let currentUser = null;
 let isBulkRunning = false;
 let shouldStopBulk = false;
 let selectedStatusFilter = 'all'; // 'all' | 'pending' | 'success' | 'failed'
@@ -46,6 +47,50 @@ const filterGrade = document.getElementById('filter-grade');
 const btnMainAction = document.getElementById('btn-main-action');
 const mainActionText = document.getElementById('main-action-text');
 
+// Subscription & Onboarding Elements
+const subscriptionBanner = document.getElementById('subscription-banner');
+const subIcon = document.getElementById('sub-icon');
+const subText = document.getElementById('sub-text');
+const subBadge = document.getElementById('sub-badge');
+const btnOpenSubModal = document.getElementById('btn-open-sub-modal');
+const modalOnboardingSub = document.getElementById('modal-onboarding-sub');
+const btnCloseSubModal = document.getElementById('btn-close-sub-modal');
+const pendingOrderAlert = document.getElementById('pending-order-alert');
+const regFullname = document.getElementById('reg-fullname');
+const regPhone = document.getElementById('reg-phone');
+const regRegion = document.getElementById('reg-region');
+const regSchool = document.getElementById('reg-school');
+const regGrade = document.getElementById('reg-grade');
+const calcStudentsRange = document.getElementById('calc-students-range');
+const calcStudentsVal = document.getElementById('calc-students-val');
+const rateBadge = document.getElementById('rate-badge');
+const calcTotalAmount = document.getElementById('calc-total-amount');
+const subCardNumber = document.getElementById('sub-card-number');
+const subCardHolder = document.getElementById('sub-card-holder');
+const subAdminLink = document.getElementById('sub-admin-link');
+const btnCopyCard = document.getElementById('btn-copy-card');
+const btnSubmitOrder = document.getElementById('btn-submit-order');
+
+// Admin Elements
+const btnOpenAdminPanel = document.getElementById('btn-open-admin-panel');
+const modalAdminPanel = document.getElementById('modal-admin-panel');
+const btnCloseAdminPanel = document.getElementById('btn-close-admin-panel');
+const tabBtnOrders = document.getElementById('tab-btn-orders');
+const tabBtnSettings = document.getElementById('tab-btn-settings');
+const tabBtnUsers = document.getElementById('tab-btn-users');
+const tabContentOrders = document.getElementById('tab-content-orders');
+const tabContentSettings = document.getElementById('tab-content-settings');
+const tabContentUsers = document.getElementById('tab-content-users');
+const adminOrdersList = document.getElementById('admin-orders-list');
+const btnRefreshOrders = document.getElementById('btn-refresh-orders');
+const formAdminSettings = document.getElementById('form-admin-settings');
+const adminInputPrice = document.getElementById('admin-input-price');
+const adminInputCard = document.getElementById('admin-input-card');
+const adminInputHolder = document.getElementById('admin-input-holder');
+const adminInputContact = document.getElementById('admin-input-contact');
+const adminUsersList = document.getElementById('admin-users-list');
+const btnRefreshUsers = document.getElementById('btn-refresh-users');
+
 // Stat Cards
 const statCardPending = document.getElementById('stat-card-pending');
 const statCardSuccess = document.getElementById('stat-card-success');
@@ -65,12 +110,72 @@ const bulkProgressBar = document.getElementById('bulk-progress-bar');
 const bulkProgressPercent = document.getElementById('bulk-progress-percent');
 const bulkStatusText = document.getElementById('bulk-status-text');
 
+// Calculation State
+let currentPricePerQuarter = 2000;
+let selectedQuarters = 1;
+let selectedDurationDays = 65;
+let selectedStudentsCount = 30;
+
 // -------------------------------------------------------------
-// 1. MA'LUMOTLARNI SUPABASE BAZASIDAN YUKLASH
+// 1. MA'LUMOTLARNI SUPABASE BAZASIDAN VA OBUNANI YUKLASH
 // -------------------------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
+    loadPublicSettings();
+    loadUserProfile();
     loadStudentsFromServer();
+    loadMyLatestOrder();
+    initSubscriptionCalculator();
+    initAdminPanel();
 });
+
+async function loadUserProfile() {
+    try {
+        const resp = await fetch('/api/me', {
+            headers: getAuthHeaders()
+        });
+        if (resp.ok) {
+            currentUser = await resp.json();
+            renderSubscriptionBanner();
+            checkAdminAndOnboarding();
+        }
+    } catch (e) {
+        console.error('User profilini yuklashda xato:', e);
+    }
+}
+
+function renderSubscriptionBanner() {
+    if (!currentUser || !subscriptionBanner) return;
+    subscriptionBanner.className = 'rounded-2xl p-3 text-xs font-semibold flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border transition-all';
+
+    const sCount = students.length;
+    const maxS = currentUser.maxStudents || 10;
+
+    if (currentUser.plan === 'active') {
+        subscriptionBanner.classList.add('bg-emerald-50', 'text-emerald-800', 'border-emerald-200');
+        subIcon.innerHTML = '<i class="fa-solid fa-crown text-emerald-600 text-base"></i>';
+        const days = currentUser.daysLeft ?? 0;
+        subText.innerHTML = `<b>Faol obuna:</b> ${days} kun qoldi (${sCount}/${maxS} o'quvchi)`;
+        subBadge.className = 'shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700';
+        subBadge.textContent = 'VIP';
+    } else if (currentUser.plan === 'blocked') {
+        subscriptionBanner.classList.add('bg-rose-50', 'text-rose-800', 'border-rose-200');
+        subIcon.innerHTML = '<i class="fa-solid fa-ban text-rose-600 text-base"></i>';
+        subText.innerHTML = `<b>Hisobingiz bloklangan!</b> Iltimos, admin bilan bog'laning: @emaktabro_bot`;
+        subBadge.className = 'shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700';
+        subBadge.textContent = 'Bloklangan';
+
+        if (btnMainAction) btnMainAction.disabled = true;
+        if (btnAddManual) btnAddManual.disabled = true;
+        if (btnOpenExcelMenu) btnOpenExcelMenu.disabled = true;
+    } else {
+        // trial
+        subscriptionBanner.classList.add('bg-amber-50', 'text-amber-800', 'border-amber-200');
+        subIcon.innerHTML = '<i class="fa-solid fa-box-open text-amber-600 text-base"></i>';
+        subText.innerHTML = `<b>Sinov rejimi:</b> ${sCount}/${maxS} ta o'quvchi`;
+        subBadge.className = 'shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700';
+        subBadge.textContent = 'Sinov';
+    }
+}
 
 async function loadStudentsFromServer() {
     try {
@@ -83,9 +188,10 @@ async function loadStudentsFromServer() {
             updateFilters();
             renderStudents();
             updateStats();
+            renderSubscriptionBanner();
         } else {
             console.error('Serverdan yuklashda xato:', resp.status);
-            renderStudents(); // Bo'sh bo'lsa ham ekranni tozalash
+            renderStudents();
         }
     } catch (e) {
         console.error('Tarmoq xatosi:', e);
@@ -139,15 +245,19 @@ async function handleExcelUpload(e) {
             },
             body: formData
         });
-        const result = await resp.json();
+        const result = await resp.json().catch(() => ({}));
 
         if (resp.ok && result.students) {
-            // Yangi yuklangan o'quvchilarni serverdan to'liq qayta olamiz
             await loadStudentsFromServer();
+            await loadUserProfile();
             triggerHaptic('success');
-            showToast(`${result.count} ta o'quvchi bazaga saqlandi!`);
+            let msg = `${result.count} ta o'quvchi saqlandi!`;
+            if (result.skipped > 0) {
+                msg += ` (${result.skipped} ta o'quvchi limit sababli qoldirildi)`;
+            }
+            showToast(msg);
         } else {
-            showToast('Xatolik: ' + (result.detail || 'Fayl saqlanmadi'), true);
+            showToast(result.detail || 'Fayl saqlanmadi', true);
         }
     } catch (err) {
         showToast('Bog\'lanishda xatolik: ' + err.message, true);
@@ -257,11 +367,14 @@ formStudent.addEventListener('submit', async (e) => {
                 headers: getAuthHeaders(),
                 body: JSON.stringify(payload)
             });
+            const data = await resp.json().catch(() => ({}));
             if (resp.ok) {
                 showToast('O\'quvchi ma\'lumotlari yangilandi');
                 await loadStudentsFromServer();
+                triggerHaptic('success');
             } else {
-                showToast('Tahrirlashda xatolik', true);
+                showToast(data.detail || 'Tahrirlashda xatolik', true);
+                triggerHaptic('error');
             }
         } else {
             // Yangi qo'shish (POST)
@@ -270,19 +383,23 @@ formStudent.addEventListener('submit', async (e) => {
                 headers: getAuthHeaders(),
                 body: JSON.stringify(payload)
             });
+            const data = await resp.json().catch(() => ({}));
             if (resp.ok) {
                 showToast('Yangi o\'quvchi saqlandi');
                 await loadStudentsFromServer();
+                await loadUserProfile();
+                triggerHaptic('success');
             } else {
-                showToast('Saqlashda xatolik', true);
+                showToast(data.detail || 'Saqlashda xatolik', true);
+                triggerHaptic('error');
             }
         }
     } catch (err) {
         showToast('Tarmoq xatosi: ' + err.message, true);
+        triggerHaptic('error');
     }
 
     modalStudentForm.classList.add('hidden');
-    triggerHaptic('success');
 });
 
 async function deleteStudent(id) {
@@ -298,8 +415,12 @@ async function deleteStudent(id) {
             updateFilters();
             renderStudents();
             updateStats();
+            await loadUserProfile();
             triggerHaptic();
             showToast('O\'quvchi o\'chirildi');
+        } else {
+            const data = await resp.json().catch(() => ({}));
+            showToast(data.detail || 'O\'chirishda xatolik', true);
         }
     } catch (err) {
         showToast('O\'chirishda xatolik: ' + err.message, true);
@@ -507,14 +628,26 @@ async function startSingleLogin(id) {
             headers: getAuthHeaders(),
             body: JSON.stringify(student)
         });
-        const result = await resp.json();
+        const result = await resp.json().catch(() => ({}));
 
-        student.status = result.status;
-        student.message = result.message || '';
-        if (result.status === 'success') {
-            student.successAt = Date.now();
+        if (!resp.ok) {
+            student.status = 'failed';
+            student.message = result.detail || 'Xatolik yuz berdi';
+            triggerHaptic('error');
+            if (resp.status === 403) {
+                showToast(result.detail || 'Obuna xatosi', true);
+                await loadUserProfile();
+            } else if (resp.status === 429) {
+                showToast(result.detail || 'Juda ko\'p so\'rov', true);
+            }
+        } else {
+            student.status = result.status;
+            student.message = result.message || '';
+            if (result.status === 'success') {
+                student.successAt = Date.now();
+            }
+            triggerHaptic(result.status === 'success' ? 'success' : 'error');
         }
-        triggerHaptic(result.status === 'success' ? 'success' : 'error');
     } catch (err) {
         student.status = 'failed';
         student.message = 'Tarmoq xatosi: ' + err.message;
@@ -575,11 +708,26 @@ async function startBulkAutomation() {
                 headers: getAuthHeaders(),
                 body: JSON.stringify(student)
             });
-            const result = await resp.json();
-            student.status = result.status;
-            student.message = result.message || '';
-            if (result.status === 'success') {
-                student.successAt = Date.now();
+            const result = await resp.json().catch(() => ({}));
+
+            if (!resp.ok) {
+                student.status = 'failed';
+                student.message = result.detail || 'Xatolik yuz berdi';
+                if (resp.status === 403) {
+                    showToast(result.detail || 'Obuna xatosi. Jarayon to\'xtatildi.', true);
+                    await loadUserProfile();
+                    break;
+                }
+                if (resp.status === 429) {
+                    showToast(result.detail || 'Tezlik limiti. 10s kutilyapti...', true);
+                    await new Promise(r => setTimeout(r, 10000));
+                }
+            } else {
+                student.status = result.status;
+                student.message = result.message || '';
+                if (result.status === 'success') {
+                    student.successAt = Date.now();
+                }
             }
         } catch (err) {
             student.status = 'failed';
@@ -611,4 +759,450 @@ function showToast(msg, isError = false) {
         toast.style.opacity = '0';
         setTimeout(() => toast.remove(), 300);
     }, 2500);
+}
+
+// -------------------------------------------------------------
+// 8. ONBOARDING & CHORAKLIK OBUNA KALKULYATORI
+// -------------------------------------------------------------
+
+function checkAdminAndOnboarding() {
+    if (!currentUser) return;
+
+    // Admin bo'lsa yuqoridagi tugmani ko'rsatish
+    if (currentUser.isAdmin && btnOpenAdminPanel) {
+        btnOpenAdminPanel.classList.remove('hidden');
+        btnOpenAdminPanel.classList.add('inline-flex');
+    }
+
+    // Agar sinf rahbar hali ro'yxatdan o'tmagan bo'lsa, oynani avtomatik ochish
+    if (!currentUser.isRegistered && modalOnboardingSub) {
+        if (regFullname && !regFullname.value) {
+            regFullname.value = currentUser.fullName || currentUser.name || '';
+        }
+        openSubscriptionModal();
+    }
+}
+
+function openSubscriptionModal() {
+    if (!modalOnboardingSub) return;
+    if (currentUser) {
+        if (regFullname && !regFullname.value) regFullname.value = currentUser.fullName || currentUser.name || '';
+        if (regPhone && !regPhone.value) regPhone.value = currentUser.phone || '';
+        if (regSchool && !regSchool.value) regSchool.value = currentUser.schoolName || '';
+        if (regGrade && !regGrade.value) regGrade.value = currentUser.grade || '';
+        if (regRegion && !regRegion.value) regRegion.value = currentUser.region || '';
+    }
+    recalcSubscription();
+    modalOnboardingSub.classList.remove('hidden');
+    triggerHaptic();
+}
+
+function closeSubscriptionModal() {
+    if (modalOnboardingSub) {
+        modalOnboardingSub.classList.add('hidden');
+    }
+}
+
+async function loadPublicSettings() {
+    try {
+        const resp = await fetch('/api/settings/public');
+        if (resp.ok) {
+            const data = await resp.json();
+            currentPricePerQuarter = data.pricePerStudentQuarter || 2000;
+            if (rateBadge) {
+                rateBadge.textContent = `1 o'quvchi / 1 chorak: ${currentPricePerQuarter.toLocaleString('uz-UZ')} so'm`;
+            }
+            if (subCardNumber) subCardNumber.textContent = data.cardNumber || '9860 1234 5678 9012';
+            if (subCardHolder) subCardHolder.textContent = data.cardHolder || 'ADMIN ISM FAMILIYA';
+            if (subAdminLink) {
+                const contact = data.adminTelegramContact || '@emaktabro_bot';
+                subAdminLink.textContent = contact;
+                subAdminLink.href = 'https://t.me/' + contact.replace('@', '');
+            }
+            recalcSubscription();
+        }
+    } catch (e) {
+        console.error('Sozlamalarni yuklashda xato:', e);
+    }
+}
+
+function initSubscriptionCalculator() {
+    if (btnOpenSubModal) {
+        btnOpenSubModal.addEventListener('click', openSubscriptionModal);
+    }
+    if (btnCloseSubModal) {
+        btnCloseSubModal.addEventListener('click', closeSubscriptionModal);
+    }
+
+    // O'quvchilar soni slayderi
+    if (calcStudentsRange) {
+        calcStudentsRange.addEventListener('input', (e) => {
+            selectedStudentsCount = parseInt(e.target.value) || 30;
+            if (calcStudentsVal) calcStudentsVal.textContent = `${selectedStudentsCount} ta`;
+            recalcSubscription();
+        });
+    }
+
+    // Chorak tanlash tugmalari
+    const quarterBtns = document.querySelectorAll('.quarter-btn');
+    quarterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            quarterBtns.forEach(b => {
+                b.className = 'quarter-btn py-2 px-1 rounded-xl border border-border bg-white text-slate-700 text-center font-bold text-[10px] hover:border-primary transition shadow-xs';
+            });
+            btn.className = 'quarter-btn active py-2 px-1 rounded-xl border border-primary bg-primary text-white text-center font-bold text-[10px] transition shadow-xs';
+            selectedQuarters = parseInt(btn.dataset.quarters) || 1;
+            selectedDurationDays = parseInt(btn.dataset.days) || 65;
+            triggerHaptic();
+            recalcSubscription();
+        });
+    });
+
+    // Karta raqamidan nusxa olish
+    if (btnCopyCard && subCardNumber) {
+        btnCopyCard.addEventListener('click', () => {
+            const cardNum = subCardNumber.textContent.replace(/\s+/g, '');
+            navigator.clipboard.writeText(cardNum).then(() => {
+                triggerHaptic('success');
+                showToast('Karta raqami nusxalandi');
+            }).catch(() => {
+                showToast(subCardNumber.textContent);
+            });
+        });
+    }
+
+    // To'lov qildim va so'rov yuborish
+    if (btnSubmitOrder) {
+        btnSubmitOrder.addEventListener('click', handleRegisterAndSubmitOrder);
+    }
+}
+
+function recalcSubscription() {
+    const total = selectedStudentsCount * currentPricePerQuarter * selectedQuarters;
+    if (calcTotalAmount) {
+        calcTotalAmount.textContent = `${total.toLocaleString('uz-UZ')} so'm`;
+    }
+    return total;
+}
+
+async function handleRegisterAndSubmitOrder() {
+    const fullName = regFullname?.value.trim();
+    const phone = regPhone?.value.trim();
+    const schoolName = regSchool?.value.trim();
+    const grade = regGrade?.value.trim();
+    const region = regRegion?.value.trim() || '';
+
+    if (!fullName || !phone || !schoolName || !grade) {
+        showToast("Iltimos, barcha anketadagi ma'lumotlarni to'ldiring!", true);
+        triggerHaptic('error');
+        return;
+    }
+
+    btnSubmitOrder.disabled = true;
+    btnSubmitOrder.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Yuborilmoqda...';
+
+    try {
+        // 1. Profilni saqlash (ro'yxatdan o'tish)
+        const regResp = await fetch('/api/register', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ fullName, phone, schoolName, grade, region })
+        });
+
+        if (!regResp.ok) {
+            const err = await regResp.json().catch(() => ({}));
+            throw new Error(err.detail || 'Profilni saqlashda xatolik');
+        }
+
+        // 2. To'lov so'rovini yuborish
+        const totalAmount = recalcSubscription();
+        const orderResp = await fetch('/api/subscription-orders', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+                studentsCount: selectedStudentsCount,
+                quartersCount: selectedQuarters,
+                durationDays: selectedDurationDays,
+                amountUzs: totalAmount
+            })
+        });
+
+        if (!orderResp.ok) {
+            const err = await orderResp.json().catch(() => ({}));
+            throw new Error(err.detail || 'So\'rov yuborishda xatolik');
+        }
+
+        triggerHaptic('success');
+        showToast("To'lov so'rovingiz qabul qilindi! Admin tez orada tasdiqlaydi.");
+        closeSubscriptionModal();
+        await loadUserProfile();
+        await loadMyLatestOrder();
+    } catch (err) {
+        showToast(err.message, true);
+        triggerHaptic('error');
+    } finally {
+        btnSubmitOrder.disabled = false;
+        btnSubmitOrder.innerHTML = '<i class="fa-solid fa-paper-plane"></i> To\'lov qildim va so\'rov yuborish';
+    }
+}
+
+async function loadMyLatestOrder() {
+    try {
+        const resp = await fetch('/api/subscription-orders/my', {
+            headers: getAuthHeaders()
+        });
+        if (resp.ok) {
+            const data = await resp.json();
+            if (data.order && data.order.status === 'pending') {
+                if (pendingOrderAlert) pendingOrderAlert.classList.remove('hidden');
+            } else {
+                if (pendingOrderAlert) pendingOrderAlert.classList.add('hidden');
+            }
+        }
+    } catch (e) {
+        console.error('So\'nggi so\'rovni yuklashda xato:', e);
+    }
+}
+
+
+// -------------------------------------------------------------
+// 9. ADMIN BOSHQARUV PANELI
+// -------------------------------------------------------------
+
+function initAdminPanel() {
+    if (btnOpenAdminPanel) {
+        btnOpenAdminPanel.addEventListener('click', () => {
+            if (modalAdminPanel) modalAdminPanel.classList.remove('hidden');
+            switchAdminTab('orders');
+            triggerHaptic();
+        });
+    }
+
+    if (btnCloseAdminPanel) {
+        btnCloseAdminPanel.addEventListener('click', () => {
+            if (modalAdminPanel) modalAdminPanel.classList.add('hidden');
+        });
+    }
+
+    // Tablar
+    if (tabBtnOrders) tabBtnOrders.addEventListener('click', () => switchAdminTab('orders'));
+    if (tabBtnSettings) tabBtnSettings.addEventListener('click', () => switchAdminTab('settings'));
+    if (tabBtnUsers) tabBtnUsers.addEventListener('click', () => switchAdminTab('users'));
+
+    // Yangilash tugmalari
+    if (btnRefreshOrders) btnRefreshOrders.addEventListener('click', loadAdminOrders);
+    if (btnRefreshUsers) btnRefreshUsers.addEventListener('click', loadAdminUsers);
+
+    // Sozlamalarni saqlash
+    if (formAdminSettings) {
+        formAdminSettings.addEventListener('submit', handleSaveAdminSettings);
+    }
+}
+
+function switchAdminTab(tab) {
+    [tabBtnOrders, tabBtnSettings, tabBtnUsers].forEach(b => {
+        if (b) {
+            b.className = 'admin-tab-btn py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition text-center';
+        }
+    });
+    [tabContentOrders, tabContentSettings, tabContentUsers].forEach(c => {
+        if (c) c.classList.add('hidden');
+    });
+
+    if (tab === 'orders') {
+        if (tabBtnOrders) tabBtnOrders.className = 'admin-tab-btn active py-1.5 rounded-lg bg-white text-primary shadow-xs transition text-center';
+        if (tabContentOrders) tabContentOrders.classList.remove('hidden');
+        loadAdminOrders();
+    } else if (tab === 'settings') {
+        if (tabBtnSettings) tabBtnSettings.className = 'admin-tab-btn active py-1.5 rounded-lg bg-white text-primary shadow-xs transition text-center';
+        if (tabContentSettings) tabContentSettings.classList.remove('hidden');
+        loadAdminSettings();
+    } else if (tab === 'users') {
+        if (tabBtnUsers) tabBtnUsers.className = 'admin-tab-btn active py-1.5 rounded-lg bg-white text-primary shadow-xs transition text-center';
+        if (tabContentUsers) tabContentUsers.classList.remove('hidden');
+        loadAdminUsers();
+    }
+    triggerHaptic();
+}
+
+async function loadAdminOrders() {
+    if (!adminOrdersList) return;
+    adminOrdersList.innerHTML = '<div class="text-center py-6 text-xs text-slate-400">Yuklanmoqda...</div>';
+
+    try {
+        const resp = await fetch('/api/admin/orders', { headers: getAuthHeaders() });
+        if (!resp.ok) throw new Error('So\'rovlarni yuklab bo\'lmadi');
+        const data = await resp.json();
+        const orders = data.orders || [];
+
+        if (orders.length === 0) {
+            adminOrdersList.innerHTML = '<div class="text-center py-8 text-xs text-slate-400">To\'lov so\'rovlari mavjud emas.</div>';
+            return;
+        }
+
+        adminOrdersList.innerHTML = '';
+        orders.forEach(order => {
+            const isPending = order.status === 'pending';
+            const statusBadge = isPending 
+                ? '<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-100 text-amber-700">Kutilmoqda</span>'
+                : (order.status === 'approved' 
+                    ? '<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-100 text-emerald-700">Tasdiqlangan</span>'
+                    : '<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-100 text-rose-700">Rad etilgan</span>');
+
+            const card = document.createElement('div');
+            card.className = 'p-3 bg-white border border-border rounded-xl shadow-xs space-y-2 text-xs';
+            card.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="font-bold text-slate-900">${order.userName || 'Foydalanuvchi'}</div>
+                    ${statusBadge}
+                </div>
+                <div class="grid grid-cols-2 gap-1 text-[11px] text-slate-600">
+                    <div>🏫 <b>Maktab:</b> ${order.schoolName || '—'} ${order.grade || ''}</div>
+                    <div>📞 <b>Tel:</b> ${order.phone || '—'}</div>
+                    <div>👨‍🎓 <b>O'quvchilar:</b> ${order.studentsCount} ta</div>
+                    <div>📅 <b>Muddat:</b> ${order.quartersCount}-chorak (${order.durationDays} kun)</div>
+                    <div>💰 <b>To'lov:</b> <span class="font-bold text-emerald-600">${(order.amountUzs || 0).toLocaleString('uz-UZ')} so'm</span></div>
+                    <div>🕒 <b>Vaqt:</b> ${order.createdAt}</div>
+                </div>
+                ${isPending ? `
+                    <div class="flex items-center gap-2 pt-2 border-t border-slate-100">
+                        <button class="btn-approve-order flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition active:scale-95" data-id="${order.id}">
+                            <i class="fa-solid fa-check"></i> Tasdiqlash
+                        </button>
+                        <button class="btn-reject-order flex-1 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs font-bold transition active:scale-95" data-id="${order.id}">
+                            <i class="fa-solid fa-xmark"></i> Rad etish
+                        </button>
+                    </div>
+                ` : ''}
+            `;
+
+            if (isPending) {
+                card.querySelector('.btn-approve-order').addEventListener('click', () => adminApproveOrder(order.id));
+                card.querySelector('.btn-reject-order').addEventListener('click', () => adminRejectOrder(order.id));
+            }
+
+            adminOrdersList.appendChild(card);
+        });
+    } catch (err) {
+        adminOrdersList.innerHTML = `<div class="text-center py-6 text-xs text-rose-500">${err.message}</div>`;
+    }
+}
+
+async function adminApproveOrder(orderId) {
+    if (!confirm('Ushbu to\'lovni tasdiqlab, obunani faollashtirmoqchimisiz?')) return;
+
+    try {
+        const resp = await fetch(`/api/admin/orders/${orderId}/approve`, {
+            method: 'POST',
+            headers: getAuthHeaders()
+        });
+        if (!resp.ok) throw new Error('Tasdiqlashda xatolik');
+        triggerHaptic('success');
+        showToast('Obuna muvaffaqiyatli faollashtirildi!');
+        loadAdminOrders();
+    } catch (err) {
+        showToast(err.message, true);
+    }
+}
+
+async function adminRejectOrder(orderId) {
+    const reason = prompt('Rad etish sababini kiriting:', 'To\'lov cheki tasdiqlanmadi');
+    if (reason === null) return;
+
+    try {
+        const resp = await fetch(`/api/admin/orders/${orderId}/reject`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ reason })
+        });
+        if (!resp.ok) throw new Error('Rad etishda xatolik');
+        triggerHaptic();
+        showToast('So\'rov rad etildi');
+        loadAdminOrders();
+    } catch (err) {
+        showToast(err.message, true);
+    }
+}
+
+async function loadAdminSettings() {
+    try {
+        const resp = await fetch('/api/admin/settings', { headers: getAuthHeaders() });
+        if (resp.ok) {
+            const data = await resp.json();
+            if (adminInputPrice) adminInputPrice.value = data.price_per_student_quarter || '2000';
+            if (adminInputCard) adminInputCard.value = data.card_number || '';
+            if (adminInputHolder) adminInputHolder.value = data.card_holder || '';
+            if (adminInputContact) adminInputContact.value = data.admin_telegram_contact || '';
+        }
+    } catch (e) {
+        console.error('Admin sozlamalarni yuklashda xato:', e);
+    }
+}
+
+async function handleSaveAdminSettings(e) {
+    e.preventDefault();
+    const payload = {
+        pricePerStudentQuarter: adminInputPrice.value.trim(),
+        cardNumber: adminInputCard.value.trim(),
+        cardHolder: adminInputHolder.value.trim(),
+        adminTelegramContact: adminInputContact.value.trim()
+    };
+
+    try {
+        const resp = await fetch('/api/admin/settings', {
+            method: 'PUT',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(payload)
+        });
+        if (!resp.ok) throw new Error('Saqlashda xatolik');
+        triggerHaptic('success');
+        showToast('Sozlamalar saqlandi!');
+        loadPublicSettings();
+    } catch (err) {
+        showToast(err.message, true);
+    }
+}
+
+async function loadAdminUsers() {
+    if (!adminUsersList) return;
+    adminUsersList.innerHTML = '<div class="text-center py-6 text-xs text-slate-400">Yuklanmoqda...</div>';
+
+    try {
+        const resp = await fetch('/api/admin/users', { headers: getAuthHeaders() });
+        if (!resp.ok) throw new Error('Foydalanuvchilarni yuklab bo\'lmadi');
+        const data = await resp.json();
+        const users = data.users || [];
+
+        if (users.length === 0) {
+            adminUsersList.innerHTML = '<div class="text-center py-8 text-xs text-slate-400">Foydalanuvchilar mavjud emas.</div>';
+            return;
+        }
+
+        adminUsersList.innerHTML = '';
+        users.forEach(u => {
+            const planBadge = u.plan === 'active' 
+                ? '<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-100 text-emerald-700">VIP</span>'
+                : (u.plan === 'trial'
+                    ? '<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-100 text-amber-700">Sinov</span>'
+                    : '<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-100 text-rose-700">Bloklangan</span>');
+
+            const card = document.createElement('div');
+            card.className = 'p-3 bg-white border border-border rounded-xl shadow-xs space-y-1.5 text-xs';
+            card.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="font-bold text-slate-900">${u.fullName || u.name || 'Sinf rahbar'}</div>
+                    ${planBadge}
+                </div>
+                <div class="grid grid-cols-2 gap-1 text-[11px] text-slate-600">
+                    <div>🏫 <b>Maktab:</b> ${u.schoolName || '—'} ${u.grade || ''}</div>
+                    <div>📞 <b>Tel:</b> ${u.phone || '—'}</div>
+                    <div>👨‍🎓 <b>O'quvchilar:</b> ${u.studentCount || 0} / ${u.maxStudents}</div>
+                    <div>📅 <b>Tugash:</b> ${u.expiresAt ? u.expiresAt.substring(0, 10) : 'Muddatsiz'}</div>
+                </div>
+            `;
+            adminUsersList.appendChild(card);
+        });
+    } catch (err) {
+        adminUsersList.innerHTML = `<div class="text-center py-6 text-xs text-rose-500">${err.message}</div>`;
+    }
 }

@@ -1,7 +1,8 @@
-﻿import hmac
+import hmac
 import hashlib
 import json
 import logging
+from datetime import datetime
 from urllib.parse import parse_qsl, unquote
 from fastapi import Header, HTTPException, Depends
 from sqlalchemy.orm import Session
@@ -95,3 +96,35 @@ async def get_current_user(
         logger.info(f"Yangi foydalanuvchi yaratildi: ID={user.id}, TG_ID={user.telegram_id}")
 
     return user
+
+
+async def require_active_subscription(
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+) -> User:
+    """
+    Obuna holatini tekshiruvchi dependency.
+    - "blocked"  → 403 xatosi
+    - "active" va muddati o'tgan → avtomatik "trial" ga qaytaradi, 403 xatosi
+    - "trial"    → o'tadi (max_students cheki main.py da tekshiriladi)
+    """
+    if user.plan == "blocked":
+        raise HTTPException(
+            status_code=403,
+            detail="Hisobingiz bloklangan. Bot admin bilan bog'laning: @emaktabro_bot"
+        )
+
+    if user.plan == "active" and user.expires_at:
+        if user.expires_at < datetime.utcnow():
+            # Muddati o'tgan — trial ga qaytarish
+            user.plan = "trial"
+            user.max_students = 10
+            user.expires_at = None
+            db.commit()
+            raise HTTPException(
+                status_code=403,
+                detail="Obuna muddati tugadi. Davom etish uchun admin bilan bog'laning: @emaktabro_bot"
+            )
+
+    return user
+
