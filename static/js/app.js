@@ -960,6 +960,9 @@ function initSubscriptionCalculator() {
     if (btnSubmitOrder) {
         btnSubmitOrder.addEventListener('click', handleRegisterAndSubmitOrder);
     }
+
+    // Boshlang'ich tarif holatini JS orqali o'rnatish (vizual + narx to'g'ri bo'lishi uchun)
+    selectTariff('academic_year');
 }
 
 function recalcSubscription() {
