@@ -2,7 +2,7 @@ import hmac
 import hashlib
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from urllib.parse import parse_qsl, unquote
 from fastapi import Header, HTTPException, Depends
 from sqlalchemy.orm import Session
@@ -85,15 +85,23 @@ async def get_current_user(
     # 3. Bazadan foydalanuvchini topish yoki yangi yaratish
     user = db.query(User).filter(User.telegram_id == telegram_id).first()
     if not user:
+        now = datetime.utcnow()
         user = User(
             telegram_id=telegram_id,
             first_name=first_name,
-            username=username
+            username=username,
+            plan="trial",
+            max_students=10,
+            expires_at=now + timedelta(days=7)
         )
         db.add(user)
         db.commit()
         db.refresh(user)
-        logger.info(f"Yangi foydalanuvchi yaratildi: ID={user.id}, TG_ID={user.telegram_id}")
+        logger.info(f"Yangi foydalanuvchi yaratildi: ID={user.id}, TG_ID={user.telegram_id} (7 kunlik sinov)")
+    elif user.plan == "trial" and user.expires_at is None:
+        created = user.created_at or datetime.utcnow()
+        user.expires_at = created + timedelta(days=7)
+        db.commit()
 
     return user
 
@@ -105,8 +113,8 @@ async def require_active_subscription(
     """
     Obuna holatini tekshiruvchi dependency.
     - "blocked"  → 403 xatosi
+    - "trial" va 7 kun muddati o'tgan → 403 xatosi
     - "active" va muddati o'tgan → avtomatik "trial" ga qaytaradi, 403 xatosi
-    - "trial"    → o'tadi (max_students cheki main.py da tekshiriladi)
     """
     if user.plan == "blocked":
         raise HTTPException(
@@ -114,12 +122,21 @@ async def require_active_subscription(
             detail="Hisobingiz bloklangan. Bot admin bilan bog'laning: @emaktabro_bot"
         )
 
+    now = datetime.utcnow()
+
+    # 7 kunlik sinov muddati tekshiruvi
+    if user.plan == "trial":
+        if user.expires_at and user.expires_at < now:
+            raise HTTPException(
+                status_code=403,
+                detail="7 kunlik bepul sinov muddatingiz tugadi. Tizimdan to'liq foydalanish uchun obunani faollashtiring."
+            )
+
+    # Faol pullik obuna muddati tekshiruvi
     if user.plan == "active" and user.expires_at:
-        if user.expires_at < datetime.utcnow():
-            # Muddati o'tgan — trial ga qaytarish
+        if user.expires_at < now:
             user.plan = "trial"
             user.max_students = 10
-            user.expires_at = None
             db.commit()
             raise HTTPException(
                 status_code=403,
@@ -127,4 +144,5 @@ async def require_active_subscription(
             )
 
     return user
+
 

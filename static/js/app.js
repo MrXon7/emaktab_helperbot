@@ -65,6 +65,9 @@ const calcStudentsRange = document.getElementById('calc-students-range');
 const calcStudentsVal = document.getElementById('calc-students-val');
 const rateBadge = document.getElementById('rate-badge');
 const calcTotalAmount = document.getElementById('calc-total-amount');
+const calcOriginalAmount = document.getElementById('calc-original-amount');
+const calcDiscountBadge = document.getElementById('calc-discount-badge');
+const calcSavedAmount = document.getElementById('calc-saved-amount');
 const subCardNumber = document.getElementById('sub-card-number');
 const subCardHolder = document.getElementById('sub-card-holder');
 const subAdminLink = document.getElementById('sub-admin-link');
@@ -168,12 +171,19 @@ function renderSubscriptionBanner() {
         if (btnAddManual) btnAddManual.disabled = true;
         if (btnOpenExcelMenu) btnOpenExcelMenu.disabled = true;
     } else {
-        // trial
+        // trial (7 kunlik sinov)
         subscriptionBanner.classList.add('bg-amber-50', 'text-amber-800', 'border-amber-200');
         subIcon.innerHTML = '<i class="fa-solid fa-box-open text-amber-600 text-base"></i>';
-        subText.innerHTML = `<b>Sinov rejimi:</b> ${sCount}/${maxS} ta o'quvchi`;
-        subBadge.className = 'shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700';
-        subBadge.textContent = 'Sinov';
+        const days = currentUser.daysLeft ?? 7;
+        if (currentUser.isExpired) {
+            subText.innerHTML = `<b>7 kunlik sinov muddati tugadi!</b> Davom etish uchun obuna xarid qiling.`;
+            subBadge.className = 'shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700';
+            subBadge.textContent = 'Tugadi';
+        } else {
+            subText.innerHTML = `<b>Sinov rejimi:</b> ${days} kun qoldi (${sCount}/${maxS} ta o'quvchi)`;
+            subBadge.className = 'shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700';
+            subBadge.textContent = `${days} kun`;
+        }
     }
 }
 
@@ -878,11 +888,49 @@ function initSubscriptionCalculator() {
 }
 
 function recalcSubscription() {
-    const total = selectedStudentsCount * currentPricePerQuarter * selectedQuarters;
-    if (calcTotalAmount) {
-        calcTotalAmount.textContent = `${total.toLocaleString('uz-UZ')} so'm`;
+    const baseTotal = selectedStudentsCount * currentPricePerQuarter * selectedQuarters;
+
+    // Chegirmalar:
+    // 1-chorak: 0% (oddiy narx)
+    // 2-chorak: 15% chegirma
+    // 3-chorak: 20% chegirma
+    // 4-chorak: 25% chegirma (4-chorak mutlaqo BEPUL!)
+    let discountPercent = 0;
+    if (selectedQuarters === 2) discountPercent = 15;
+    else if (selectedQuarters === 3) discountPercent = 20;
+    else if (selectedQuarters === 4) discountPercent = 25;
+
+    let discountedTotal = baseTotal;
+    let saved = 0;
+
+    if (discountPercent > 0) {
+        discountedTotal = Math.round((baseTotal * (100 - discountPercent) / 100) / 1000) * 1000;
+        saved = baseTotal - discountedTotal;
     }
-    return total;
+
+    if (calcTotalAmount) {
+        calcTotalAmount.textContent = `${discountedTotal.toLocaleString('uz-UZ')} so'm`;
+    }
+
+    if (calcOriginalAmount && calcDiscountBadge && calcSavedAmount) {
+        if (saved > 0) {
+            calcOriginalAmount.textContent = `${baseTotal.toLocaleString('uz-UZ')} so'm`;
+            calcOriginalAmount.classList.remove('hidden');
+            calcSavedAmount.textContent = saved.toLocaleString('uz-UZ');
+
+            if (selectedQuarters === 4) {
+                calcDiscountBadge.innerHTML = `🔥 <b>${saved.toLocaleString('uz-UZ')} so'm tejaldi</b> (4-chorak mutlaqo BEPUL!)`;
+            } else {
+                calcDiscountBadge.innerHTML = `🎉 <b>${saved.toLocaleString('uz-UZ')} so'm tejaldi</b> (${discountPercent}% chegirma)`;
+            }
+            calcDiscountBadge.classList.remove('hidden');
+        } else {
+            calcOriginalAmount.classList.add('hidden');
+            calcDiscountBadge.classList.add('hidden');
+        }
+    }
+
+    return discountedTotal;
 }
 
 async function handleRegisterAndSubmitOrder() {

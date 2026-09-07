@@ -61,7 +61,7 @@ class User(Base):
         days_left = None
         is_expired = False
 
-        if self.plan == "active" and self.expires_at:
+        if self.expires_at:
             delta = self.expires_at - now
             days_left = max(0, delta.days)
             is_expired = delta.total_seconds() <= 0
