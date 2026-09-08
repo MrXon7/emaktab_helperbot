@@ -47,6 +47,9 @@
 </head>
 <body class="bg-surface text-slate-800 font-sans antialiased select-none pb-32 overflow-x-hidden">
 
+    <!-- Global Yuqori Yuklanish Chizig'i (Top loader bar) -->
+    <div id="global-top-loader" class="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-500 z-50 transition-all duration-300 -translate-y-full opacity-0 pointer-events-none shadow-sm"></div>
+
     <!-- Top App Bar (Toza va ixcham) -->
     <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-border px-3.5 sm:px-4 py-2.5 sm:py-3 shadow-sm">
         <div class="flex items-center justify-between max-w-lg mx-auto">
@@ -269,6 +272,22 @@
         </div>
     </div>
 
+    <!-- Excel Yuklanish Animatsiyasi Modali -->
+    <div id="modal-upload-loading" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-3xl p-6 max-w-xs w-full text-center space-y-3 shadow-2xl animate-scale-up">
+            <div class="w-14 h-14 mx-auto rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl shadow-inner">
+                <i class="fa-solid fa-cloud-arrow-up fa-bounce"></i>
+            </div>
+            <div>
+                <h4 class="text-sm font-bold text-slate-900">Ma'lumotlar saqlanmoqda</h4>
+                <p id="upload-loading-text" class="text-xs text-slate-500 mt-1">Excel o'quvchilari bazaga yuklanmoqda, iltimos kuting...</p>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                <div class="bg-emerald-500 h-1.5 rounded-full animate-pulse w-full"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- O'quvchi Qo'shish / Tahrirlash Modali -->
     <div id="modal-student-form" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center hidden p-0 sm:p-4">
         <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-4 sm:p-5 space-y-3.5 sm:space-y-4 shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto">
@@ -425,15 +444,15 @@
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2" id="tariff-selector-group">
                         <!-- Variant 1: 1 Oylik -->
-                        <div data-tariff="monthly" id="tariff-card-monthly" class="tariff-card cursor-pointer relative p-3 rounded-2xl border-2 border-border bg-white text-slate-700 hover:border-primary transition shadow-xs flex flex-col justify-between">
+                        <div data-tariff="monthly" id="tariff-card-monthly" class="tariff-card cursor-pointer relative p-3 rounded-2xl border-2 border-slate-200 bg-white text-slate-700 hover:border-primary transition shadow-xs flex flex-col justify-between">
                             <div class="flex items-start justify-between">
                                 <div>
-                                    <div class="font-extrabold text-xs text-slate-900">1 Oylik</div>
-                                    <div class="text-[10px] text-slate-400 mt-0.5">30 kunlik to'liq kirish</div>
+                                    <div id="tariff-monthly-title" class="font-extrabold text-xs text-slate-900">1 Oylik</div>
+                                    <div id="tariff-monthly-subtitle" class="text-[10px] text-slate-400 mt-0.5">30 kunlik to'liq kirish</div>
                                 </div>
-                                <span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-bold">30 kun</span>
+                                <span id="tariff-monthly-badge" class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-bold">30 kun</span>
                             </div>
-                            <div class="mt-2.5 pt-2 border-t border-slate-100 flex items-baseline justify-between">
+                            <div id="tariff-monthly-line" class="mt-2.5 pt-2 border-t border-slate-100 flex items-baseline justify-between">
                                 <span class="text-[10px] text-slate-500 font-medium">Summa:</span>
                                 <span id="tariff-monthly-price" class="text-xs font-black text-slate-900">24 000 so'm</span>
                             </div>
@@ -446,12 +465,12 @@
                             </span>
                             <div class="flex items-start justify-between">
                                 <div>
-                                    <div class="font-extrabold text-xs text-slate-900">25-Maygacha</div>
+                                    <div id="tariff-academic-title" class="font-extrabold text-xs text-slate-900">25-Maygacha</div>
                                     <div id="tariff-academic-subtitle" class="text-[10px] text-slate-400 mt-0.5">O'quv yili yakunigacha</div>
                                 </div>
                                 <span id="tariff-academic-days-badge" class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-bold">... kun</span>
                             </div>
-                            <div class="mt-2.5 pt-2 border-t border-slate-100 flex items-baseline justify-between">
+                            <div id="tariff-academic-line" class="mt-2.5 pt-2 border-t border-slate-100 flex items-baseline justify-between">
                                 <span class="text-[10px] text-slate-500 font-medium">Summa:</span>
                                 <span id="tariff-academic-price" class="text-xs font-black text-slate-900">... so'm</span>
                             </div>

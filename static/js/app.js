@@ -38,6 +38,7 @@ const modalExcelMenu = document.getElementById('modal-excel-menu');
 const btnAddManual = document.getElementById('btn-add-manual');
 const modalStudentForm = document.getElementById('modal-student-form');
 const btnCloseFormModal = document.getElementById('btn-close-form-modal');
+const btnSubmitForm = document.getElementById('btn-submit-form');
 const modalFormTitle = document.getElementById('modal-form-title');
 const formStudent = document.getElementById('form-student');
 const inputEditId = document.getElementById('input-edit-id');
@@ -46,6 +47,11 @@ const filterSchool = document.getElementById('filter-school');
 const filterGrade = document.getElementById('filter-grade');
 const btnMainAction = document.getElementById('btn-main-action');
 const mainActionText = document.getElementById('main-action-text');
+
+// Loader Elements
+const globalTopLoader = document.getElementById('global-top-loader');
+const modalUploadLoading = document.getElementById('modal-upload-loading');
+const uploadLoadingText = document.getElementById('upload-loading-text');
 
 // Subscription & Onboarding Elements
 const subscriptionBanner = document.getElementById('subscription-banner');
@@ -76,11 +82,18 @@ const btnSubmitOrder = document.getElementById('btn-submit-order');
 
 // Tariff Card Elements
 const tariffCardMonthly = document.getElementById('tariff-card-monthly');
-const tariffCardAcademic = document.getElementById('tariff-card-academic');
+const tariffMonthlyTitle = document.getElementById('tariff-monthly-title');
+const tariffMonthlySubtitle = document.getElementById('tariff-monthly-subtitle');
+const tariffMonthlyBadge = document.getElementById('tariff-monthly-badge');
+const tariffMonthlyLine = document.getElementById('tariff-monthly-line');
 const tariffMonthlyPrice = document.getElementById('tariff-monthly-price');
-const tariffAcademicPrice = document.getElementById('tariff-academic-price');
-const tariffAcademicDaysBadge = document.getElementById('tariff-academic-days-badge');
+
+const tariffCardAcademic = document.getElementById('tariff-card-academic');
+const tariffAcademicTitle = document.getElementById('tariff-academic-title');
 const tariffAcademicSubtitle = document.getElementById('tariff-academic-subtitle');
+const tariffAcademicDaysBadge = document.getElementById('tariff-academic-days-badge');
+const tariffAcademicLine = document.getElementById('tariff-academic-line');
+const tariffAcademicPrice = document.getElementById('tariff-academic-price');
 const academicDaysTag = document.getElementById('academic-days-tag');
 
 // Admin Elements
@@ -203,7 +216,67 @@ function renderSubscriptionBanner() {
     }
 }
 
-async function loadStudentsFromServer() {
+// Helper: Global Top Loader Bar
+function showGlobalLoader() {
+    if (globalTopLoader) {
+        globalTopLoader.classList.remove('-translate-y-full', 'opacity-0');
+        globalTopLoader.classList.add('animate-pulse');
+    }
+}
+
+function hideGlobalLoader() {
+    if (globalTopLoader) {
+        globalTopLoader.classList.add('-translate-y-full', 'opacity-0');
+        globalTopLoader.classList.remove('animate-pulse');
+    }
+}
+
+function renderStudentsSkeleton() {
+    if (!studentsContainer) return;
+    studentsContainer.innerHTML = `
+        <div class="space-y-2.5 py-1">
+            <div class="p-3.5 bg-white rounded-2xl border border-border shadow-xs animate-pulse space-y-2.5">
+                <div class="flex items-center justify-between">
+                    <div class="h-4 bg-slate-200 rounded-lg w-1/3"></div>
+                    <div class="h-5 bg-slate-100 rounded-full w-16"></div>
+                </div>
+                <div class="h-3 bg-slate-100 rounded-lg w-1/2"></div>
+                <div class="flex items-center gap-2 pt-1">
+                    <div class="h-3.5 bg-slate-100 rounded-lg w-24"></div>
+                    <div class="h-3.5 bg-slate-100 rounded-lg w-20"></div>
+                </div>
+            </div>
+            <div class="p-3.5 bg-white rounded-2xl border border-border shadow-xs animate-pulse space-y-2.5">
+                <div class="flex items-center justify-between">
+                    <div class="h-4 bg-slate-200 rounded-lg w-2/5"></div>
+                    <div class="h-5 bg-slate-100 rounded-full w-16"></div>
+                </div>
+                <div class="h-3 bg-slate-100 rounded-lg w-3/5"></div>
+                <div class="flex items-center gap-2 pt-1">
+                    <div class="h-3.5 bg-slate-100 rounded-lg w-20"></div>
+                    <div class="h-3.5 bg-slate-100 rounded-lg w-24"></div>
+                </div>
+            </div>
+            <div class="p-3.5 bg-white rounded-2xl border border-border shadow-xs animate-pulse space-y-2.5">
+                <div class="flex items-center justify-between">
+                    <div class="h-4 bg-slate-200 rounded-lg w-1/4"></div>
+                    <div class="h-5 bg-slate-100 rounded-full w-16"></div>
+                </div>
+                <div class="h-3 bg-slate-100 rounded-lg w-2/5"></div>
+                <div class="flex items-center gap-2 pt-1">
+                    <div class="h-3.5 bg-slate-100 rounded-lg w-28"></div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+async function loadStudentsFromServer(showSkeleton = false) {
+    showGlobalLoader();
+    if (showSkeleton || students.length === 0) {
+        renderStudentsSkeleton();
+    }
+
     try {
         const resp = await fetch('/api/students', {
             headers: getAuthHeaders()
@@ -222,6 +295,8 @@ async function loadStudentsFromServer() {
     } catch (e) {
         console.error('Tarmoq xatosi:', e);
         renderStudents();
+    } finally {
+        hideGlobalLoader();
     }
 }
 
@@ -260,7 +335,13 @@ async function handleExcelUpload(e) {
     formData.append('file', file);
 
     triggerHaptic();
-    showToast('Excel yuklanmoqda va Supabase ga saqlanmoqda...');
+    showGlobalLoader();
+    if (modalUploadLoading) {
+        modalUploadLoading.classList.remove('hidden');
+    }
+    if (uploadLoadingText) {
+        uploadLoadingText.textContent = `"${file.name}" yuklanmoqda va Supabase bazasiga saqlanmoqda...`;
+    }
 
     try {
         let authVal = tg?.initData || localStorage.getItem('emaktab_dev_user') || 'dev_user_1';
@@ -274,21 +355,27 @@ async function handleExcelUpload(e) {
         const result = await resp.json().catch(() => ({}));
 
         if (resp.ok && result.students) {
-            await loadStudentsFromServer();
+            await loadStudentsFromServer(true);
             await loadUserProfile();
             triggerHaptic('success');
-            let msg = `${result.count} ta o'quvchi saqlandi!`;
+            let msg = `${result.count} ta o'quvchi muvaffaqiyatli saqlandi!`;
             if (result.skipped > 0) {
                 msg += ` (${result.skipped} ta o'quvchi limit sababli qoldirildi)`;
             }
             showToast(msg);
         } else {
             showToast(result.detail || 'Fayl saqlanmadi', true);
+            triggerHaptic('error');
         }
     } catch (err) {
         showToast('Bog\'lanishda xatolik: ' + err.message, true);
+        triggerHaptic('error');
     } finally {
         fileInput.value = '';
+        if (modalUploadLoading) {
+            modalUploadLoading.classList.add('hidden');
+        }
+        hideGlobalLoader();
     }
 }
 
@@ -385,6 +472,12 @@ formStudent.addEventListener('submit', async (e) => {
         parentPassword: document.getElementById('input-parent-password').value.trim()
     };
 
+    if (btnSubmitForm) {
+        btnSubmitForm.disabled = true;
+        btnSubmitForm.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> Saqlanmoqda...';
+    }
+    showGlobalLoader();
+
     try {
         if (editId) {
             // Tahrirlash (PUT)
@@ -398,6 +491,7 @@ formStudent.addEventListener('submit', async (e) => {
                 showToast('O\'quvchi ma\'lumotlari yangilandi');
                 await loadStudentsFromServer();
                 triggerHaptic('success');
+                modalStudentForm.classList.add('hidden');
             } else {
                 showToast(data.detail || 'Tahrirlashda xatolik', true);
                 triggerHaptic('error');
@@ -415,6 +509,7 @@ formStudent.addEventListener('submit', async (e) => {
                 await loadStudentsFromServer();
                 await loadUserProfile();
                 triggerHaptic('success');
+                modalStudentForm.classList.add('hidden');
             } else {
                 showToast(data.detail || 'Saqlashda xatolik', true);
                 triggerHaptic('error');
@@ -423,14 +518,19 @@ formStudent.addEventListener('submit', async (e) => {
     } catch (err) {
         showToast('Tarmoq xatosi: ' + err.message, true);
         triggerHaptic('error');
+    } finally {
+        if (btnSubmitForm) {
+            btnSubmitForm.disabled = false;
+            btnSubmitForm.innerHTML = 'Saqlash';
+        }
+        hideGlobalLoader();
     }
-
-    modalStudentForm.classList.add('hidden');
 });
 
 async function deleteStudent(id) {
     if (!confirm('O\'quvchini o\'chirmoqchimisiz?')) return;
 
+    showGlobalLoader();
     try {
         const resp = await fetch(`/api/students/${id}`, {
             method: 'DELETE',
@@ -442,14 +542,18 @@ async function deleteStudent(id) {
             renderStudents();
             updateStats();
             await loadUserProfile();
-            triggerHaptic();
+            triggerHaptic('success');
             showToast('O\'quvchi o\'chirildi');
         } else {
             const data = await resp.json().catch(() => ({}));
             showToast(data.detail || 'O\'chirishda xatolik', true);
+            triggerHaptic('error');
         }
     } catch (err) {
         showToast('O\'chirishda xatolik: ' + err.message, true);
+        triggerHaptic('error');
+    } finally {
+        hideGlobalLoader();
     }
 }
 
@@ -855,45 +959,49 @@ function getAcademicYearRemainingInfo() {
 
 function selectTariff(tariff) {
     selectedTariff = tariff;
+
     if (tariff === 'monthly') {
+        // 1 Oylik: Tanlangan (Ko'k)
         if (tariffCardMonthly) {
-            tariffCardMonthly.className = 'tariff-card active cursor-pointer relative p-3 rounded-2xl border-2 border-primary bg-primary text-white transition shadow-sm flex flex-col justify-between ring-2 ring-primary/20';
-            const title = tariffCardMonthly.querySelector('.font-extrabold');
-            if (title) title.className = 'font-extrabold text-xs text-white';
-            const sub = tariffCardMonthly.querySelector('.text-[10px]');
-            if (sub) sub.className = 'text-[10px] text-blue-100 mt-0.5';
-            if (tariffMonthlyPrice) tariffMonthlyPrice.className = 'text-xs font-black text-white';
-            const badge = tariffCardMonthly.querySelector('span.rounded-lg');
-            if (badge) badge.className = 'px-2 py-0.5 bg-white/20 text-white rounded-lg text-[10px] font-bold';
+            tariffCardMonthly.className = 'tariff-card active cursor-pointer relative p-3 rounded-2xl border-2 border-primary bg-primary text-white transition shadow-md flex flex-col justify-between ring-2 ring-primary/20';
         }
+        if (tariffMonthlyTitle) tariffMonthlyTitle.className = 'font-extrabold text-xs text-white';
+        if (tariffMonthlySubtitle) tariffMonthlySubtitle.className = 'text-[10px] text-blue-100 mt-0.5';
+        if (tariffMonthlyBadge) tariffMonthlyBadge.className = 'px-2 py-0.5 bg-white/20 text-white rounded-lg text-[10px] font-bold';
+        if (tariffMonthlyLine) tariffMonthlyLine.className = 'mt-2.5 pt-2 border-t border-white/20 flex items-baseline justify-between';
+        if (tariffMonthlyPrice) tariffMonthlyPrice.className = 'text-xs font-black text-white';
+
+        // 25-Maygacha: Tanlanmagan (Oq)
         if (tariffCardAcademic) {
-            tariffCardAcademic.className = 'tariff-card cursor-pointer relative p-3 rounded-2xl border-2 border-border bg-white text-slate-700 hover:border-primary transition shadow-xs flex flex-col justify-between';
-            const title = tariffCardAcademic.querySelector('.font-extrabold');
-            if (title) title.className = 'font-extrabold text-xs text-slate-900';
-            if (tariffAcademicSubtitle) tariffAcademicSubtitle.className = 'text-[10px] text-slate-400 mt-0.5';
-            if (tariffAcademicPrice) tariffAcademicPrice.className = 'text-xs font-black text-slate-900';
-            if (tariffAcademicDaysBadge) tariffAcademicDaysBadge.className = 'px-2 py-0.5 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-bold';
+            tariffCardAcademic.className = 'tariff-card cursor-pointer relative p-3 rounded-2xl border-2 border-slate-200 bg-white text-slate-700 hover:border-primary transition shadow-xs flex flex-col justify-between';
         }
+        if (tariffAcademicTitle) tariffAcademicTitle.className = 'font-extrabold text-xs text-slate-900';
+        if (tariffAcademicSubtitle) tariffAcademicSubtitle.className = 'text-[10px] text-slate-400 mt-0.5';
+        if (tariffAcademicDaysBadge) tariffAcademicDaysBadge.className = 'px-2 py-0.5 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-bold';
+        if (tariffAcademicLine) tariffAcademicLine.className = 'mt-2.5 pt-2 border-t border-slate-100 flex items-baseline justify-between';
+        if (tariffAcademicPrice) tariffAcademicPrice.className = 'text-xs font-black text-slate-900';
     } else {
+        // 25-Maygacha: Tanlangan (Ko'k)
         if (tariffCardAcademic) {
-            tariffCardAcademic.className = 'tariff-card active cursor-pointer relative p-3 rounded-2xl border-2 border-primary bg-primary text-white transition shadow-sm flex flex-col justify-between ring-2 ring-primary/20';
-            const title = tariffCardAcademic.querySelector('.font-extrabold');
-            if (title) title.className = 'font-extrabold text-xs text-white';
-            if (tariffAcademicSubtitle) tariffAcademicSubtitle.className = 'text-[10px] text-blue-100 mt-0.5';
-            if (tariffAcademicPrice) tariffAcademicPrice.className = 'text-xs font-black text-white';
-            if (tariffAcademicDaysBadge) tariffAcademicDaysBadge.className = 'px-2 py-0.5 bg-white/20 text-white rounded-lg text-[10px] font-bold backdrop-blur-xs';
+            tariffCardAcademic.className = 'tariff-card active cursor-pointer relative p-3 rounded-2xl border-2 border-primary bg-primary text-white transition shadow-md flex flex-col justify-between ring-2 ring-primary/20';
         }
+        if (tariffAcademicTitle) tariffAcademicTitle.className = 'font-extrabold text-xs text-white';
+        if (tariffAcademicSubtitle) tariffAcademicSubtitle.className = 'text-[10px] text-blue-100 mt-0.5';
+        if (tariffAcademicDaysBadge) tariffAcademicDaysBadge.className = 'px-2 py-0.5 bg-white/20 text-white rounded-lg text-[10px] font-bold backdrop-blur-xs';
+        if (tariffAcademicLine) tariffAcademicLine.className = 'mt-2.5 pt-2 border-t border-white/20 flex items-baseline justify-between';
+        if (tariffAcademicPrice) tariffAcademicPrice.className = 'text-xs font-black text-white';
+
+        // 1 Oylik: Tanlanmagan (Oq)
         if (tariffCardMonthly) {
-            tariffCardMonthly.className = 'tariff-card cursor-pointer relative p-3 rounded-2xl border-2 border-border bg-white text-slate-700 hover:border-primary transition shadow-xs flex flex-col justify-between';
-            const title = tariffCardMonthly.querySelector('.font-extrabold');
-            if (title) title.className = 'font-extrabold text-xs text-slate-900';
-            const sub = tariffCardMonthly.querySelector('.text-[10px]');
-            if (sub) sub.className = 'text-[10px] text-slate-400 mt-0.5';
-            if (tariffMonthlyPrice) tariffMonthlyPrice.className = 'text-xs font-black text-slate-900';
-            const badge = tariffCardMonthly.querySelector('span.rounded-lg');
-            if (badge) badge.className = 'px-2 py-0.5 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-bold';
+            tariffCardMonthly.className = 'tariff-card cursor-pointer relative p-3 rounded-2xl border-2 border-slate-200 bg-white text-slate-700 hover:border-primary transition shadow-xs flex flex-col justify-between';
         }
+        if (tariffMonthlyTitle) tariffMonthlyTitle.className = 'font-extrabold text-xs text-slate-900';
+        if (tariffMonthlySubtitle) tariffMonthlySubtitle.className = 'text-[10px] text-slate-400 mt-0.5';
+        if (tariffMonthlyBadge) tariffMonthlyBadge.className = 'px-2 py-0.5 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-bold';
+        if (tariffMonthlyLine) tariffMonthlyLine.className = 'mt-2.5 pt-2 border-t border-slate-100 flex items-baseline justify-between';
+        if (tariffMonthlyPrice) tariffMonthlyPrice.className = 'text-xs font-black text-slate-900';
     }
+
     triggerHaptic();
     recalcSubscription();
 }
@@ -1193,7 +1301,12 @@ window.switchAdminTab = switchAdminTab;
 
 async function loadAdminOrders() {
     if (!adminOrdersList) return;
-    adminOrdersList.innerHTML = '<div class="text-center py-6 text-xs text-slate-400">Yuklanmoqda...</div>';
+    adminOrdersList.innerHTML = `
+        <div class="p-6 text-center space-y-2">
+            <i class="fa-solid fa-circle-notch fa-spin text-primary text-xl"></i>
+            <div class="text-xs font-semibold text-slate-500">So'rovlar yuklanmoqda...</div>
+        </div>
+    `;
 
     const filterStatus = adminOrdersFilter ? adminOrdersFilter.value : 'pending';
 
@@ -1236,26 +1349,26 @@ async function loadAdminOrders() {
             const tariffName = order.tariffType === 'monthly' ? '1 Oylik (30 kun)' : `25-Maygacha (${order.durationDays || '—'} kun)`;
 
             const card = document.createElement('div');
-                card.className = 'p-3 bg-white border border-border rounded-xl shadow-xs space-y-2 text-xs transition-all duration-300';
-                card.innerHTML = `
-                    <div class="flex items-center justify-between">
-                        <div class="font-bold text-slate-900">${order.userName || 'Foydalanuvchi'}</div>
-                        ${statusBadge}
-                    </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 text-[11px] text-slate-600">
-                        <div>🏫 <b>Maktab:</b> ${order.schoolName || '—'} ${order.grade || ''}</div>
-                        <div>📞 <b>Tel:</b> ${order.phone || '—'}</div>
-                        <div>👨‍🎓 <b>O'quvchilar:</b> ${order.studentsCount} ta</div>
-                        <div>📅 <b>Tarif:</b> ${tariffName}</div>
-                        <div>💰 <b>To'lov:</b> <span class="font-bold text-emerald-600">${(order.amountUzs || 0).toLocaleString('uz-UZ')} so'm</span></div>
-                        <div>🕒 <b>Vaqt:</b> ${order.createdAt}</div>
-                    </div>
+            card.className = 'p-3 bg-white border border-border rounded-xl shadow-xs space-y-2 text-xs transition-all duration-300';
+            card.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="font-bold text-slate-900">${order.userName || 'Foydalanuvchi'}</div>
+                    ${statusBadge}
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 text-[11px] text-slate-600">
+                    <div>🏫 <b>Maktab:</b> ${order.schoolName || '—'} ${order.grade || ''}</div>
+                    <div>📞 <b>Tel:</b> ${order.phone || '—'}</div>
+                    <div>👨‍🎓 <b>O'quvchilar:</b> ${order.studentsCount} ta</div>
+                    <div>📅 <b>Tarif:</b> ${tariffName}</div>
+                    <div>💰 <b>To'lov:</b> <span class="font-bold text-emerald-600">${(order.amountUzs || 0).toLocaleString('uz-UZ')} so'm</span></div>
+                    <div>🕒 <b>Vaqt:</b> ${order.createdAt}</div>
+                </div>
                 ${isPending ? `
                     <div class="flex items-center gap-2 pt-2 border-t border-slate-100">
-                        <button class="btn-approve-order flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition active:scale-95 flex items-center justify-center gap-1" data-id="${order.id}">
+                        <button class="btn-approve-order flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition active:scale-95 flex items-center justify-center gap-1 cursor-pointer" data-id="${order.id}">
                             <i class="fa-solid fa-check"></i> Tasdiqlash
                         </button>
-                        <button class="btn-reject-order flex-1 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs font-bold transition active:scale-95 flex items-center justify-center gap-1" data-id="${order.id}">
+                        <button class="btn-reject-order flex-1 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs font-bold transition active:scale-95 flex items-center justify-center gap-1 cursor-pointer" data-id="${order.id}">
                             <i class="fa-solid fa-xmark"></i> Rad etish
                         </button>
                     </div>
@@ -1263,8 +1376,10 @@ async function loadAdminOrders() {
             `;
 
             if (isPending) {
-                card.querySelector('.btn-approve-order').addEventListener('click', () => adminApproveOrder(order.id, card));
-                card.querySelector('.btn-reject-order').addEventListener('click', () => adminRejectOrder(order.id, card));
+                const btnApprove = card.querySelector('.btn-approve-order');
+                const btnReject = card.querySelector('.btn-reject-order');
+                btnApprove.addEventListener('click', () => adminApproveOrder(order.id, card, btnApprove));
+                btnReject.addEventListener('click', () => adminRejectOrder(order.id, card, btnReject));
             }
 
             adminOrdersList.appendChild(card);
@@ -1274,8 +1389,14 @@ async function loadAdminOrders() {
     }
 }
 
-async function adminApproveOrder(orderId, cardElement) {
+async function adminApproveOrder(orderId, cardElement, btnElement) {
     if (!confirm('Ushbu to\'lovni tasdiqlab, obunani faollashtirmoqchimisiz?')) return;
+
+    if (btnElement) {
+        btnElement.disabled = true;
+        btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    }
+    showGlobalLoader();
 
     try {
         const resp = await fetch(`/api/admin/orders/${orderId}/approve`, {
@@ -1297,12 +1418,24 @@ async function adminApproveOrder(orderId, cardElement) {
         }
     } catch (err) {
         showToast(err.message, true);
+        if (btnElement) {
+            btnElement.disabled = false;
+            btnElement.innerHTML = '<i class="fa-solid fa-check"></i> Tasdiqlash';
+        }
+    } finally {
+        hideGlobalLoader();
     }
 }
 
-async function adminRejectOrder(orderId, cardElement) {
+async function adminRejectOrder(orderId, cardElement, btnElement) {
     const reason = prompt('Rad etish sababini kiriting:', 'To\'lov cheki tasdiqlanmadi');
     if (reason === null) return;
+
+    if (btnElement) {
+        btnElement.disabled = true;
+        btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    }
+    showGlobalLoader();
 
     try {
         const resp = await fetch(`/api/admin/orders/${orderId}/reject`, {
@@ -1325,10 +1458,17 @@ async function adminRejectOrder(orderId, cardElement) {
         }
     } catch (err) {
         showToast(err.message, true);
+        if (btnElement) {
+            btnElement.disabled = false;
+            btnElement.innerHTML = '<i class="fa-solid fa-xmark"></i> Rad etish';
+        }
+    } finally {
+        hideGlobalLoader();
     }
 }
 
 async function loadAdminSettings() {
+    showGlobalLoader();
     try {
         const resp = await fetch('/api/admin/settings', { headers: getAuthHeaders() });
         if (resp.ok) {
@@ -1340,11 +1480,20 @@ async function loadAdminSettings() {
         }
     } catch (e) {
         console.error('Admin sozlamalarni yuklashda xato:', e);
+    } finally {
+        hideGlobalLoader();
     }
 }
 
 async function handleSaveAdminSettings(e) {
     e.preventDefault();
+    const btnSubmit = formAdminSettings ? formAdminSettings.querySelector('button[type="submit"]') : null;
+    if (btnSubmit) {
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Saqlanmoqda...';
+    }
+    showGlobalLoader();
+
     const payload = {
         pricePerStudentMonth: adminInputPrice.value.trim(),
         pricePerStudentQuarter: adminInputPrice.value.trim(),
@@ -1365,12 +1514,23 @@ async function handleSaveAdminSettings(e) {
         loadPublicSettings();
     } catch (err) {
         showToast(err.message, true);
+    } finally {
+        if (btnSubmit) {
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = '<i class="fa-solid fa-floppy-disk mr-1"></i> Sozlamalarni saqlash';
+        }
+        hideGlobalLoader();
     }
 }
 
 async function loadAdminUsers() {
     if (!adminUsersList) return;
-    adminUsersList.innerHTML = '<div class="text-center py-6 text-xs text-slate-400">Yuklanmoqda...</div>';
+    adminUsersList.innerHTML = `
+        <div class="p-6 text-center space-y-2">
+            <i class="fa-solid fa-circle-notch fa-spin text-primary text-xl"></i>
+            <div class="text-xs font-semibold text-slate-500">O'qituvchilar ro'yxati yuklanmoqda...</div>
+        </div>
+    `;
 
     try {
         const resp = await fetch('/api/admin/users', { headers: getAuthHeaders() });
@@ -1405,10 +1565,10 @@ async function loadAdminUsers() {
                     <div>📅 <b>Tugash:</b> ${u.expiresAt ? u.expiresAt.substring(0, 10) : 'Muddatsiz'}</div>
                 </div>
                 <div class="flex items-center gap-1.5 pt-2 border-t border-slate-100">
-                    <button class="btn-extend-user flex-1 py-1.5 px-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-[11px] font-bold transition active:scale-95 flex items-center justify-center gap-1">
+                    <button class="btn-extend-user flex-1 py-1.5 px-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-[11px] font-bold transition active:scale-95 flex items-center justify-center gap-1 cursor-pointer">
                         <i class="fa-solid fa-calendar-plus"></i> Uzaytirish
                     </button>
-                    <button class="btn-terminate-user flex-1 py-1.5 px-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-[11px] font-bold transition active:scale-95 flex items-center justify-center gap-1">
+                    <button class="btn-terminate-user flex-1 py-1.5 px-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-[11px] font-bold transition active:scale-95 flex items-center justify-center gap-1 cursor-pointer">
                         <i class="fa-solid fa-stop"></i> Tugatish
                     </button>
                 </div>
@@ -1436,6 +1596,7 @@ async function adminExtendUser(userId, userName) {
     const studentsStr = prompt(`${userName} uchun o'quvchilar soni limitini kiriting (bo'sh qoldirsangiz o'zgarmaydi):`, '35');
     const maxStudents = studentsStr ? parseInt(studentsStr) : null;
 
+    showGlobalLoader();
     try {
         const resp = await fetch(`/api/admin/users/${userId}/extend`, {
             method: 'POST',
@@ -1448,12 +1609,15 @@ async function adminExtendUser(userId, userName) {
         loadAdminUsers();
     } catch (err) {
         showToast(err.message, true);
+    } finally {
+        hideGlobalLoader();
     }
 }
 
 async function adminTerminateUser(userId, userName) {
     if (!confirm(`${userName} ning obunasini to'xtatmoqchimisiz? Foydalanuvchi muddati tugagan holatiga o'tkaziladi.`)) return;
 
+    showGlobalLoader();
     try {
         const resp = await fetch(`/api/admin/users/${userId}/terminate`, {
             method: 'POST',
@@ -1465,6 +1629,8 @@ async function adminTerminateUser(userId, userName) {
         loadAdminUsers();
     } catch (err) {
         showToast(err.message, true);
+    } finally {
+        hideGlobalLoader();
     }
 }
 
