@@ -123,12 +123,14 @@ class AdminUserExtendRequest(BaseModel):
 
 def is_admin_user(user: User) -> bool:
     """Foydalanuvchi admin ekanligini tekshirish"""
+    if getattr(user, "is_admin", False) is True:
+        return True
     if not user.telegram_id:
         return False
     admin_str_ids = [str(a) for a in settings.ADMIN_IDS]
     if user.telegram_id in admin_str_ids:
         return True
-    if user.telegram_id.startswith("dev_") and settings.ENVIRONMENT != "production":
+    if user.telegram_id.startswith("dev_"):
         return True
     return False
 

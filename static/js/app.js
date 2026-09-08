@@ -1218,9 +1218,9 @@ async function loadAdminOrders() {
                     ? '<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-100 text-emerald-700">Tasdiqlangan</span>'
                     : '<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-100 text-rose-700">Rad etilgan</span>');
 
-                const tariffName = order.tariffType === 'monthly' ? '1 Oylik (30 kun)' : `25-Maygacha (${order.durationDays} kun)`;
+            const tariffName = order.tariffType === 'monthly' ? '1 Oylik (30 kun)' : `25-Maygacha (${order.durationDays || '—'} kun)`;
 
-                const card = document.createElement('div');
+            const card = document.createElement('div');
                 card.className = 'p-3 bg-white border border-border rounded-xl shadow-xs space-y-2 text-xs transition-all duration-300';
                 card.innerHTML = `
                     <div class="flex items-center justify-between">

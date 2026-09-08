@@ -52,6 +52,7 @@ class User(Base):
     plan = Column(String(20), default="trial", nullable=False)
     expires_at = Column(DateTime, nullable=True)   # None = muddatsiz (trial/blocked)
     max_students = Column(Integer, default=10)     # Trial: 10, Active: sotib olingan limit
+    is_admin = Column(Boolean, default=False)      # Admin huquqi
 
     students = relationship("Student", back_populates="owner", cascade="all, delete-orphan")
 
@@ -211,6 +212,7 @@ def _run_migrations():
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS grade VARCHAR(50)",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS region VARCHAR(100)",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_registered BOOLEAN DEFAULT FALSE",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE",
         # subscription_orders jadvali
         """
         CREATE TABLE IF NOT EXISTS subscription_orders (
