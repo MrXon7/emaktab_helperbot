@@ -132,16 +132,20 @@ let selectedStudentsCount = 30;
 let selectedDurationDays = 260;
 
 // -------------------------------------------------------------
-// 1. MA'LUMOTLARNI SUPABASE BAZASIDAN VA OBUNANI YUKLASH
-// -------------------------------------------------------------
-document.addEventListener('DOMContentLoaded', () => {
+function initApp() {
     loadPublicSettings();
     loadUserProfile();
     loadStudentsFromServer();
     loadMyLatestOrder();
     initSubscriptionCalculator();
     initAdminPanel();
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+} else {
+    initApp();
+}
 
 async function loadUserProfile() {
     try {
@@ -796,8 +800,8 @@ function checkAdminAndOnboarding() {
         btnOpenAdminPanel.classList.add('inline-flex');
     }
 
-    // Agar sinf rahbar hali ro'yxatdan o'tmagan bo'lsa, oynani avtomatik ochish
-    if (!currentUser.isRegistered && modalOnboardingSub) {
+    // Agar oddiy sinf rahbar hali ro'yxatdan o'tmagan bo'lsa, oynani avtomatik ochish
+    if (!currentUser.isAdmin && !currentUser.isRegistered && modalOnboardingSub) {
         if (regFullname && !regFullname.value) {
             regFullname.value = currentUser.fullName || currentUser.name || '';
         }
@@ -1119,19 +1123,29 @@ async function loadMyLatestOrder() {
 // 9. ADMIN BOSHQARUV PANELI
 // -------------------------------------------------------------
 
+function openAdminPanelModal() {
+    if (modalAdminPanel) {
+        modalAdminPanel.classList.remove('hidden');
+    }
+    switchAdminTab('orders');
+    triggerHaptic();
+}
+window.openAdminPanelModal = openAdminPanelModal;
+
+function closeAdminPanelModal() {
+    if (modalAdminPanel) {
+        modalAdminPanel.classList.add('hidden');
+    }
+}
+window.closeAdminPanelModal = closeAdminPanelModal;
+
 function initAdminPanel() {
     if (btnOpenAdminPanel) {
-        btnOpenAdminPanel.addEventListener('click', () => {
-            if (modalAdminPanel) modalAdminPanel.classList.remove('hidden');
-            switchAdminTab('orders');
-            triggerHaptic();
-        });
+        btnOpenAdminPanel.addEventListener('click', openAdminPanelModal);
     }
 
     if (btnCloseAdminPanel) {
-        btnCloseAdminPanel.addEventListener('click', () => {
-            if (modalAdminPanel) modalAdminPanel.classList.add('hidden');
-        });
+        btnCloseAdminPanel.addEventListener('click', closeAdminPanelModal);
     }
 
     // Tablar
@@ -1153,7 +1167,7 @@ function initAdminPanel() {
 function switchAdminTab(tab) {
     [tabBtnOrders, tabBtnSettings, tabBtnUsers].forEach(b => {
         if (b) {
-            b.className = 'admin-tab-btn py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition text-center';
+            b.className = 'admin-tab-btn py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition text-center cursor-pointer';
         }
     });
     [tabContentOrders, tabContentSettings, tabContentUsers].forEach(c => {
@@ -1161,20 +1175,21 @@ function switchAdminTab(tab) {
     });
 
     if (tab === 'orders') {
-        if (tabBtnOrders) tabBtnOrders.className = 'admin-tab-btn active py-1.5 rounded-lg bg-white text-primary shadow-xs transition text-center';
+        if (tabBtnOrders) tabBtnOrders.className = 'admin-tab-btn active py-1.5 rounded-lg bg-white text-primary shadow-xs transition text-center cursor-pointer';
         if (tabContentOrders) tabContentOrders.classList.remove('hidden');
         loadAdminOrders();
     } else if (tab === 'settings') {
-        if (tabBtnSettings) tabBtnSettings.className = 'admin-tab-btn active py-1.5 rounded-lg bg-white text-primary shadow-xs transition text-center';
+        if (tabBtnSettings) tabBtnSettings.className = 'admin-tab-btn active py-1.5 rounded-lg bg-white text-primary shadow-xs transition text-center cursor-pointer';
         if (tabContentSettings) tabContentSettings.classList.remove('hidden');
         loadAdminSettings();
     } else if (tab === 'users') {
-        if (tabBtnUsers) tabBtnUsers.className = 'admin-tab-btn active py-1.5 rounded-lg bg-white text-primary shadow-xs transition text-center';
+        if (tabBtnUsers) tabBtnUsers.className = 'admin-tab-btn active py-1.5 rounded-lg bg-white text-primary shadow-xs transition text-center cursor-pointer';
         if (tabContentUsers) tabContentUsers.classList.remove('hidden');
         loadAdminUsers();
     }
     triggerHaptic();
 }
+window.switchAdminTab = switchAdminTab;
 
 async function loadAdminOrders() {
     if (!adminOrdersList) return;

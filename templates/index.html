@@ -62,7 +62,7 @@
             
             <div class="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
                 <!-- Admin Panel Button (faqat adminlar uchun ko'rinadi) -->
-                <button id="btn-open-admin-panel" class="hidden items-center gap-1.5 px-2.5 py-1 rounded-xl text-[10px] sm:text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition shadow-xs active:scale-95">
+                <button type="button" id="btn-open-admin-panel" onclick="openAdminPanelModal()" class="hidden items-center gap-1.5 px-2.5 py-1 rounded-xl text-[10px] sm:text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition shadow-xs active:scale-95 cursor-pointer">
                     <i class="fa-solid fa-crown text-amber-500"></i> Admin
                 </button>
                 <span class="inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200 shrink-0">
@@ -518,20 +518,20 @@
                         <p class="text-[10px] text-slate-500 font-medium">To'lovlar, narxlar va foydalanuvchilar</p>
                     </div>
                 </div>
-                <button id="btn-close-admin-panel" class="text-slate-400 hover:text-slate-600 p-1">
+                <button type="button" id="btn-close-admin-panel" onclick="closeAdminPanelModal()" class="text-slate-400 hover:text-slate-600 p-1 cursor-pointer">
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
 
             <!-- Admin Tab Tugmalari -->
             <div class="grid grid-cols-3 gap-1.5 p-1 bg-slate-100 rounded-xl text-xs font-bold">
-                <button id="tab-btn-orders" class="admin-tab-btn active py-1.5 rounded-lg bg-white text-primary shadow-xs transition text-center">
+                <button type="button" id="tab-btn-orders" onclick="switchAdminTab('orders')" class="admin-tab-btn active py-1.5 rounded-lg bg-white text-primary shadow-xs transition text-center cursor-pointer">
                     📥 So'rovlar
                 </button>
-                <button id="tab-btn-settings" class="admin-tab-btn py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition text-center">
+                <button type="button" id="tab-btn-settings" onclick="switchAdminTab('settings')" class="admin-tab-btn py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition text-center cursor-pointer">
                     ⚙️ Sozlamalar
                 </button>
-                <button id="tab-btn-users" class="admin-tab-btn py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition text-center">
+                <button type="button" id="tab-btn-users" onclick="switchAdminTab('users')" class="admin-tab-btn py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition text-center cursor-pointer">
                     👥 O'qituvchilar
                 </button>
             </div>

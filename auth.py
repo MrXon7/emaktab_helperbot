@@ -68,6 +68,17 @@ async def get_current_user(
             telegram_id = str(user_info["id"])
             first_name = user_info.get("first_name", "Telegram User")
             username = user_info.get("username")
+    elif init_data_raw and "user=" in init_data_raw:
+        try:
+            parsed_data = dict(parse_qsl(init_data_raw, keep_blank_values=True))
+            if "user" in parsed_data:
+                user_info = json.loads(unquote(parsed_data["user"]))
+                if user_info and "id" in user_info:
+                    telegram_id = str(user_info["id"])
+                    first_name = user_info.get("first_name", "Telegram User")
+                    username = user_info.get("username")
+        except Exception as e:
+            logger.warning(f"initData extract xatosi: {e}")
 
     # 2. Agar Telegram tekshiruvidan o'tmagan bo'lsa (yoki Mahalliy brauzer bo'lsa)
     if not telegram_id:
