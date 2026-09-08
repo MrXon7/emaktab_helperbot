@@ -16,7 +16,7 @@ class Settings(BaseModel):
     HOST: str = os.getenv("HOST", "0.0.0.0")
     PORT: int = int(os.getenv("PORT", "8000"))
     SECRET_KEY: str = os.getenv("SECRET_KEY", "super-secret-key-change-me")
-    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "production")
+    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
     # Admin Telegram ID lari (vergul bilan ajratilgan, masalan: "123456,654321")
     ADMIN_IDS: list[int] = [
         int(x.strip()) for x in os.getenv("ADMIN_IDS", "").split(",") if x.strip().isdigit()
