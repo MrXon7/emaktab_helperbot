@@ -940,31 +940,18 @@ function closeSubscriptionModal() {
     }
 }
 
-function openOfertaModal(e) {
-    if (e) {
-        if (e.preventDefault) e.preventDefault();
-        if (e.stopPropagation) e.stopPropagation();
+function openOfertaModal() {
+    if (modalOferta) {
+        modalOferta.classList.remove('hidden');
+        triggerHaptic();
     }
-    const modal = document.getElementById('modal-oferta') || modalOferta;
-    if (modal) {
-        modal.classList.remove('hidden');
-        modal.style.setProperty('display', 'flex', 'important');
-        modal.style.zIndex = '99999';
-    }
-    triggerHaptic();
 }
 
-function closeOfertaModal(e) {
-    if (e) {
-        if (e.preventDefault) e.preventDefault();
-        if (e.stopPropagation) e.stopPropagation();
+function closeOfertaModal() {
+    if (modalOferta) {
+        modalOferta.classList.add('hidden');
+        triggerHaptic();
     }
-    const modal = document.getElementById('modal-oferta') || modalOferta;
-    if (modal) {
-        modal.classList.add('hidden');
-        modal.style.display = 'none';
-    }
-    triggerHaptic();
 }
 
 window.openOfertaModal = openOfertaModal;

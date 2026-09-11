@@ -520,9 +520,9 @@
             <div class="text-center px-2 pt-1">
                 <p class="text-[11px] text-slate-500 leading-snug">
                     "To'lov qildim va so'rov yuborish" tugmasini bosish orqali siz 
-                    <a href="javascript:void(0)" id="btn-open-oferta" onclick="openOfertaModal(event)" class="text-primary font-bold underline hover:text-primary-dark cursor-pointer inline">
+                    <button type="button" id="btn-open-oferta" onclick="openOfertaModal()" class="text-primary font-bold underline hover:text-primary-dark cursor-pointer inline">
                         Ommaviy oferta
-                    </a> 
+                    </button> 
                     shartlariga to'liq rozilik bildirasiz.
                 </p>
             </div>
@@ -536,7 +536,7 @@
 
 
     <!-- OMMAVIY OFERTA MODALI -->
-    <div id="modal-oferta" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4" style="z-index: 99999; display: none;">
+    <div id="modal-oferta" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[60] flex items-end sm:items-center justify-center hidden p-0 sm:p-4">
         <div class="bg-white w-full max-w-2xl rounded-t-3xl sm:rounded-3xl p-4 sm:p-6 pb-6 space-y-3.5 shadow-2xl animate-slide-up max-h-[92vh] flex flex-col">
             <!-- Header -->
             <div class="flex items-center justify-between border-b border-border pb-3 shrink-0">
@@ -549,7 +549,7 @@
                         <p class="text-[10px] text-slate-500 font-medium">Foydalanish shartlari, maxfiylik va javobgarlik kelishuvi</p>
                     </div>
                 </div>
-                <button type="button" id="btn-close-oferta" onclick="closeOfertaModal(event)" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition cursor-pointer">
+                <button type="button" id="btn-close-oferta" onclick="closeOfertaModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition cursor-pointer">
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
