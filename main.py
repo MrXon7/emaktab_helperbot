@@ -110,6 +110,7 @@ class SubscriptionOrderCreateRequest(BaseModel):
 class AdminSettingsUpdateRequest(BaseModel):
     pricePerStudentMonth: str | None = None
     pricePerStudentQuarter: str | None = None
+    academicDiscountPercent: str | None = None
     cardNumber: str
     cardHolder: str
     adminTelegramContact: str
@@ -444,9 +445,16 @@ async def get_public_settings(db: Session = Depends(get_db)):
     except ValueError:
         quarter_price = 2000
 
+    discount_val = SystemSetting.get(db, "academic_discount_percent", "20")
+    try:
+        academic_discount = int(discount_val)
+    except ValueError:
+        academic_discount = 20
+
     return {
         "pricePerStudentMonth": month_price,
         "pricePerStudentQuarter": quarter_price,
+        "academicDiscountPercent": academic_discount,
         "cardNumber": SystemSetting.get(db, "card_number", "9860 1234 5678 9012"),
         "cardHolder": SystemSetting.get(db, "card_holder", "ADMIN ISM FAMILIYA"),
         "adminTelegramContact": SystemSetting.get(db, "admin_telegram_contact", "@emaktabro_bot")
@@ -623,6 +631,7 @@ async def admin_get_settings(
     return {
         "price_per_student_month": SystemSetting.get(db, "price_per_student_month", "800"),
         "price_per_student_quarter": SystemSetting.get(db, "price_per_student_quarter", "2000"),
+        "academic_discount_percent": SystemSetting.get(db, "academic_discount_percent", "20"),
         "card_number": SystemSetting.get(db, "card_number", "9860 1234 5678 9012"),
         "card_holder": SystemSetting.get(db, "card_holder", "ADMIN ISM FAMILIYA"),
         "admin_telegram_contact": SystemSetting.get(db, "admin_telegram_contact", "@emaktabro_bot")
@@ -639,6 +648,13 @@ async def admin_update_settings(
         SystemSetting.set(db, "price_per_student_month", req.pricePerStudentMonth.strip())
     if req.pricePerStudentQuarter:
         SystemSetting.set(db, "price_per_student_quarter", req.pricePerStudentQuarter.strip())
+    if req.academicDiscountPercent is not None:
+        val = req.academicDiscountPercent.strip()
+        try:
+            pct = max(0, min(100, int(val)))
+            SystemSetting.set(db, "academic_discount_percent", str(pct))
+        except ValueError:
+            pass
     SystemSetting.set(db, "card_number", req.cardNumber.strip())
     SystemSetting.set(db, "card_holder", req.cardHolder.strip())
     SystemSetting.set(db, "admin_telegram_contact", req.adminTelegramContact.strip())

@@ -460,7 +460,7 @@
 
                         <!-- Variant 2: 25-Maygacha (O'quv yili yakunigacha) -->
                         <div data-tariff="academic_year" id="tariff-card-academic" class="tariff-card cursor-pointer relative p-3 rounded-2xl border-2 border-slate-200 bg-white text-slate-700 hover:border-primary transition shadow-xs flex flex-col justify-between">
-                            <span class="absolute -top-2 right-2 px-2 py-0.5 text-[8px] font-black bg-amber-400 text-slate-950 rounded-full shadow-xs tracking-wider uppercase">
+                            <span id="tariff-academic-discount-badge" class="absolute -top-2 right-2 px-2 py-0.5 text-[8px] font-black bg-amber-400 text-slate-950 rounded-full shadow-xs tracking-wider uppercase">
                                 🏆 -20% CHEGIRMA
                             </span>
                             <div class="flex items-start justify-between">
@@ -516,10 +516,142 @@
                 </div>
             </div>
 
+            <!-- Ommaviy oferta eslatmasi -->
+            <div class="text-center px-2 pt-1">
+                <p class="text-[11px] text-slate-500 leading-snug">
+                    "To'lov qildim va so'rov yuborish" tugmasini bosish orqali siz 
+                    <button type="button" id="btn-open-oferta" onclick="openOfertaModal()" class="text-primary font-bold underline hover:text-primary-dark cursor-pointer inline">
+                        Ommaviy oferta
+                    </button> 
+                    shartlariga to'liq rozilik bildirasiz.
+                </p>
+            </div>
+
             <!-- Tugma -->
             <button type="button" id="btn-submit-order" class="w-full py-3 bg-emerald-600 text-white font-black text-xs rounded-xl shadow-md hover:bg-emerald-700 transition flex items-center justify-center gap-2 active:scale-98">
                 <i class="fa-solid fa-paper-plane"></i> To'lov qildim va so'rov yuborish
             </button>
+        </div>
+    </div>
+
+
+    <!-- OMMAVIY OFERTA MODALI -->
+    <div id="modal-oferta" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[60] flex items-end sm:items-center justify-center hidden p-0 sm:p-4">
+        <div class="bg-white w-full max-w-2xl rounded-t-3xl sm:rounded-3xl p-4 sm:p-6 pb-6 space-y-3.5 shadow-2xl animate-slide-up max-h-[92vh] flex flex-col">
+            <!-- Header -->
+            <div class="flex items-center justify-between border-b border-border pb-3 shrink-0">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-blue-100 text-primary flex items-center justify-center text-sm font-black">
+                        <i class="fa-solid fa-file-shield"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm sm:text-base font-black text-slate-900">Ommaviy Oferta</h3>
+                        <p class="text-[10px] text-slate-500 font-medium">Foydalanish shartlari, maxfiylik va javobgarlik kelishuvi</p>
+                    </div>
+                </div>
+                <button type="button" id="btn-close-oferta" onclick="closeOfertaModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition cursor-pointer">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Content (Scrollable) -->
+            <div class="overflow-y-auto pr-1 space-y-3 text-xs text-slate-600 leading-relaxed max-h-[62vh]">
+                <div class="bg-amber-50/80 border border-amber-200/80 rounded-xl p-3 text-[11px] text-amber-900 leading-snug">
+                    <i class="fa-solid fa-triangle-exclamation text-amber-600 mr-1"></i>
+                    <b>DIQQAT:</b> Ilovadan foydalanish, ro'yxatdan o'tish yoki to'lov so'rovini yuborish orqali siz quyidagi shartlarga to'liq, cheklovlarsiz va so'zsiz rozilik bildirasiz.
+                </div>
+
+                <div class="space-y-1">
+                    <h4 class="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                        <span class="w-4 h-4 rounded-full bg-blue-100 text-primary text-[10px] flex items-center justify-center font-black">1</span>
+                        Umumiy qoidalar va Aksept
+                    </h4>
+                    <p class="text-[11px] text-slate-600 pl-5">
+                        1.1. Mazkur hujjat O'zbekiston Respublikasi Fuqarolik Kodeksining 367 va 370-moddalariga muvofiq rasmiy <b>Ommaviy Oferta</b> (shartnoma) hisoblanadi.<br>
+                        1.2. Foydalanuvchi (o'qituvchi, sinf rahbari) tomonidan ro'yxatdan o'tish, ilovadan foydalanish yoki "To'lov qildim va so'rov yuborish" tugmasini bosish ushbu Ofertaning barcha shartlarini to'liq va so'zsiz qabul qilish (<b>Aksept</b>) hisoblanadi.
+                    </p>
+                </div>
+
+                <div class="space-y-1">
+                    <h4 class="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                        <span class="w-4 h-4 rounded-full bg-blue-100 text-primary text-[10px] flex items-center justify-center font-black">2</span>
+                        Ilovaning mustaqil maqomi va xususiyati ("As-Is")
+                    </h4>
+                    <p class="text-[11px] text-slate-600 pl-5">
+                        2.1. "eMaktab Helper" — o'qituvchilar va sinf rahbarlariga maktab hisobotlarini Excel jadvallar orqali shakllantirish, baholar va davomatni tizimlashtirishga yordam beruvchi mustaqil avtomatlashtirish yordamchisi (assistent vositadir).<br>
+                        2.2. Mazkur ilova <b>hech qanday davlat tashkilotining, Vazirlikning yoki "eMaktab" (kundalik.com) platformasining rasmiy ilovasi emas</b>. Ilova mustaqil ishlab chiquvchilar tomonidan pedagoglarning kundalik mehnatini yengillatish maqsadida yaratilgan.<br>
+                        2.3. Ilova <b>"boricha" ("as is")</b> tamoyili asosida taqdim etiladi. Ishlab chiquvchilar ilovaning to'xtovsiz yoki mutlaqo xatosiz ishlashiga qat'iy kafolat bermaydi.
+                    </p>
+                </div>
+
+                <div class="space-y-1">
+                    <h4 class="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                        <span class="w-4 h-4 rounded-full bg-blue-100 text-primary text-[10px] flex items-center justify-center font-black">3</span>
+                        Ma'lumotlarni kiritish va Foydalanuvchining shaxsiy mas'uliyati
+                    </h4>
+                    <p class="text-[11px] text-slate-600 pl-5">
+                        3.1. Ilovaga kiritiladigan yoki yuklanadigan har qanday ma'lumotlar (o'quvchilar F.I.SH., maktab, sinf, baholar, telefon raqamlari va h.k.) <b>Foydalanuvchi tomonidan mutlaqo o'z ixtiyori, xohishi va shaxsiy qarori bilan</b> kiritiladi.<br>
+                        3.2. Foydalanuvchi ta'lim oluvchilarning ma'lumotlarini kiritishda O'zbekiston Respublikasining "Shaxsiy ma'lumotlar to'g'risida"gi Qonuni, pedagogik etika qoidalari hamda ta'lim muassasasi ichki tartib-qoidalariga to'liq rioya etish, shuningdek agar talab etilsa ta'lim oluvchilar yoki ularning qonuniy vakillarining tegishli roziligini olish bo'yicha <b>yakka tartibda to'liq qonuniy javobgardir</b>.<br>
+                        3.3. Dastur ishlab chiquvchisi Foydalanuvchi kiritgan ma'lumotlarning to'g'riligi, qonuniyligi yoki haqqoniyligini tekshirish majburiyatini olmaydi.
+                    </p>
+                </div>
+
+                <div class="space-y-1">
+                    <h4 class="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                        <span class="w-4 h-4 rounded-full bg-blue-100 text-primary text-[10px] flex items-center justify-center font-black">4</span>
+                        Maxfiylik kafolati va Ma'lumotlar xavfsizligi
+                    </h4>
+                    <p class="text-[11px] text-slate-600 pl-5">
+                        4.1. <b>Ishlab chiquvchilar kafolati:</b> Dasturchilar Foydalanuvchi kiritgan shaxsiy ma'lumotlarni noqonuniy qayta ishlamaydi, <b>uchinchi shaxslarga bermaydi, sotmaydi, tijoriy maqsadlarda foydalanmaydi va tarqatmaydi</b>.<br>
+                        4.2. Kiritilgan ma'lumotlar faqatgina Foydalanuvchining o'z hisobida va sessiyasida dasturning yordamchi funksiyalarini (hisobot tuzish, saralash, ro'yxat shakllantirish) bajarish maqsadida xavfsiz saqlanadi.<br>
+                        4.3. Foydalanuvchi istalgan vaqtda o'zi kiritgan barcha ma'lumotlarni dasturdan to'liq o'chirib tashlash huquqiga ega.
+                    </p>
+                </div>
+
+                <div class="space-y-1">
+                    <h4 class="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                        <span class="w-4 h-4 rounded-full bg-rose-100 text-rose-600 text-[10px] flex items-center justify-center font-black">5</span>
+                        Ishlab chiquvchining javobgarligini to'liq cheklash (Rad etish)
+                    </h4>
+                    <p class="text-[11px] text-slate-600 pl-5">
+                        5.1. Amaldagi qonunchilikda ruxsat etilgan maksimal darajada, <b>Dasturchi va ishlab chiquvchilar jamoasi quyidagi holatlar uchun hech qanday huquqiy, moddiy, ma'muriy yoki jinoiy javobgarlikni o'z zimmasiga OLMAYDI:</b><br>
+                        • Foydalanuvchi tomonidan kiritilgan ma'lumotlarning noto'g'ri, xato yoki noqonuniy ekanligi oqibatida yuzaga kelgan vaziyatlar;<br>
+                        • "eMaktab" yoki uchinchi tomon tizimlaridagi yangilanishlar, qoidalar o'zgarishi, bloklanishlar yoki kirish cheklovlari;<br>
+                        • Internet provayderlar, server uzilishlari, aloqa sifati yoki texnik nosozliklar sababli yuzaga kelgan kechikishlar;<br>
+                        • Foydalanuvchining Telegram akkaunti, parollari yoki qurilmasiga uchinchi shaxslar kirishi oqibatidagi harakatlar;<br>
+                        • Foydalanuvchining kasbiy faoliyatida, ish joyida yoki ta'lim jarayonida yuzaga kelishi mumkin bo'lgan har qanday e'tirozlar, tushunmovchiliklar, intizomiy yoki moddiy oqibatlar.
+                    </p>
+                </div>
+
+                <div class="space-y-1">
+                    <h4 class="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                        <span class="w-4 h-4 rounded-full bg-blue-100 text-primary text-[10px] flex items-center justify-center font-black">6</span>
+                        Obuna va To'lovlar tartibi
+                    </h4>
+                    <p class="text-[11px] text-slate-600 pl-5">
+                        6.1. Ilovadagi tariflar dasturiy ta'minotdan ma'lum muddat foydalanish huquqi va server texnik infratuzilmasi xarajatlarini qoplash uchun to'lanadigan xizmat haqi hisoblanadi.<br>
+                        6.2. Foydalanuvchi to'lov qilishdan oldin dastur funksiyalari bilan <b>7 kunlik bepul sinov davrida</b> to'liq tanishib chiqish imkoniyatiga ega bo'lgan holda to'lovni o'z ixtiyori bilan amalga oshiradi.
+                    </p>
+                </div>
+
+                <div class="space-y-1">
+                    <h4 class="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                        <span class="w-4 h-4 rounded-full bg-blue-100 text-primary text-[10px] flex items-center justify-center font-black">7</span>
+                        Yakuniy qoidalar
+                    </h4>
+                    <p class="text-[11px] text-slate-600 pl-5">
+                        7.1. Ishlab chiquvchi ushbu Oferta shartlariga istalgan vaqtda o'zgartirish kiritish huquqiga ega. Yangilangan shartlar ilovada e'lon qilingan paytdan kuchga kiradi.<br>
+                        7.2. Mazkur Ofertaning biror-bir qoidasiga rozi bo'lmagan shaxs Ilovadan foydalanishni darhol to'xtatishi shart.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Footer Action -->
+            <div class="pt-2 border-t border-border shrink-0">
+                <button type="button" onclick="closeOfertaModal()" class="w-full py-2.5 bg-primary text-white font-bold text-xs rounded-xl shadow hover:bg-primary-dark transition cursor-pointer">
+                    <i class="fa-solid fa-check mr-1.5"></i> Shartlar bilan tanishdim va roziman
+                </button>
+            </div>
         </div>
     </div>
 
@@ -586,6 +718,16 @@
                         </label>
                         <input type="number" id="admin-input-price" required value="800" class="w-full px-3 py-2 bg-white border border-border rounded-xl text-xs font-bold text-primary focus:ring-2 focus:ring-primary/20 focus:outline-none">
                         <p class="text-[9px] text-slate-400 mt-0.5">Misol: 800 so'm (30 o'quvchi 1 oy = 24 000 so'm)</p>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 mb-1">
+                            25-Maygacha (o'quv yili) tarifi chegirmasi (%)
+                        </label>
+                        <div class="relative">
+                            <input type="number" id="admin-input-discount" min="0" max="100" required value="20" class="w-full px-3 py-2 bg-white border border-border rounded-xl text-xs font-bold text-primary focus:ring-2 focus:ring-primary/20 focus:outline-none">
+                            <span class="absolute right-3 top-2 text-xs font-bold text-slate-400">%</span>
+                        </div>
+                        <p class="text-[9px] text-slate-400 mt-0.5">O'quv yili oxirigacha obuna bo'lganda avtomatik qo'llaniladigan chegirma foizi</p>
                     </div>
                     <div>
                         <label class="block text-[11px] font-bold text-slate-700 mb-1">Karta raqami (To'lov qabul qilish uchun)</label>

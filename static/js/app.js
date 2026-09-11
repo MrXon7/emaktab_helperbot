@@ -79,6 +79,9 @@ const subCardHolder = document.getElementById('sub-card-holder');
 const subAdminLink = document.getElementById('sub-admin-link');
 const btnCopyCard = document.getElementById('btn-copy-card');
 const btnSubmitOrder = document.getElementById('btn-submit-order');
+const modalOferta = document.getElementById('modal-oferta');
+const btnOpenOferta = document.getElementById('btn-open-oferta');
+const btnCloseOferta = document.getElementById('btn-close-oferta');
 
 // Tariff Card Elements
 const tariffCardMonthly = document.getElementById('tariff-card-monthly');
@@ -94,6 +97,7 @@ const tariffAcademicSubtitle = document.getElementById('tariff-academic-subtitle
 const tariffAcademicDaysBadge = document.getElementById('tariff-academic-days-badge');
 const tariffAcademicLine = document.getElementById('tariff-academic-line');
 const tariffAcademicPrice = document.getElementById('tariff-academic-price');
+const tariffAcademicDiscountBadge = document.getElementById('tariff-academic-discount-badge');
 const academicDaysTag = document.getElementById('academic-days-tag');
 
 // Admin Elements
@@ -112,6 +116,7 @@ const adminOrdersCountBadge = document.getElementById('admin-orders-count-badge'
 const btnRefreshOrders = document.getElementById('btn-refresh-orders');
 const formAdminSettings = document.getElementById('form-admin-settings');
 const adminInputPrice = document.getElementById('admin-input-price');
+const adminInputDiscount = document.getElementById('admin-input-discount');
 const adminInputCard = document.getElementById('admin-input-card');
 const adminInputHolder = document.getElementById('admin-input-holder');
 const adminInputContact = document.getElementById('admin-input-contact');
@@ -140,6 +145,7 @@ const bulkStatusText = document.getElementById('bulk-status-text');
 // Calculation State
 let currentPricePerMonth = 800;
 let currentPricePerQuarter = 2000;
+let currentAcademicDiscountPercent = 20;
 let selectedTariff = 'academic_year'; // 'monthly' yoki 'academic_year'
 let selectedStudentsCount = 30;
 let selectedDurationDays = 260;
@@ -933,6 +939,23 @@ function closeSubscriptionModal() {
     }
 }
 
+function openOfertaModal() {
+    if (modalOferta) {
+        modalOferta.classList.remove('hidden');
+        triggerHaptic();
+    }
+}
+
+function closeOfertaModal() {
+    if (modalOferta) {
+        modalOferta.classList.add('hidden');
+        triggerHaptic();
+    }
+}
+
+window.openOfertaModal = openOfertaModal;
+window.closeOfertaModal = closeOfertaModal;
+
 function getAcademicYearRemainingInfo() {
     const now = new Date();
     const currentYear = now.getFullYear();
@@ -1013,6 +1036,18 @@ async function loadPublicSettings() {
             const data = await resp.json();
             currentPricePerMonth = data.pricePerStudentMonth || 800;
             currentPricePerQuarter = data.pricePerStudentQuarter || 2000;
+            if (data.academicDiscountPercent !== undefined) {
+                const parsedDiscount = parseInt(data.academicDiscountPercent);
+                currentAcademicDiscountPercent = !isNaN(parsedDiscount) ? parsedDiscount : 20;
+            }
+            if (tariffAcademicDiscountBadge) {
+                if (currentAcademicDiscountPercent > 0) {
+                    tariffAcademicDiscountBadge.textContent = `🏆 -${currentAcademicDiscountPercent}% CHEGIRMA`;
+                    tariffAcademicDiscountBadge.classList.remove('hidden');
+                } else {
+                    tariffAcademicDiscountBadge.classList.add('hidden');
+                }
+            }
             if (rateBadge) {
                 rateBadge.textContent = `1 o'quvchi / 1 oy: ${currentPricePerMonth.toLocaleString('uz-UZ')} so'm`;
             }
@@ -1073,6 +1108,19 @@ function initSubscriptionCalculator() {
         btnSubmitOrder.addEventListener('click', handleRegisterAndSubmitOrder);
     }
 
+    // Ommaviy oferta modali tinglovchilari
+    if (btnOpenOferta) {
+        btnOpenOferta.addEventListener('click', openOfertaModal);
+    }
+    if (btnCloseOferta) {
+        btnCloseOferta.addEventListener('click', closeOfertaModal);
+    }
+    if (modalOferta) {
+        modalOferta.addEventListener('click', (e) => {
+            if (e.target === modalOferta) closeOfertaModal();
+        });
+    }
+
     // Boshlang'ich tarif holatini JS orqali o'rnatish (vizual + narx to'g'ri bo'lishi uchun)
     selectTariff('academic_year');
 }
@@ -1085,7 +1133,7 @@ function recalcSubscription() {
 
     // 2. 25-maygacha o'quv yili pro-rata narxi
     const academicBase = monthlyBase * academicInfo.months;
-    const discountPercent = academicInfo.months > 1 ? 20 : 0;
+    const discountPercent = academicInfo.months > 1 ? currentAcademicDiscountPercent : 0;
     const academicDiscounted = discountPercent > 0
         ? Math.round((academicBase * (100 - discountPercent) / 100) / 1000) * 1000
         : academicBase;
@@ -1474,6 +1522,7 @@ async function loadAdminSettings() {
         if (resp.ok) {
             const data = await resp.json();
             if (adminInputPrice) adminInputPrice.value = data.price_per_student_month || data.price_per_student_quarter || '800';
+            if (adminInputDiscount) adminInputDiscount.value = data.academic_discount_percent !== undefined ? data.academic_discount_percent : '20';
             if (adminInputCard) adminInputCard.value = data.card_number || '';
             if (adminInputHolder) adminInputHolder.value = data.card_holder || '';
             if (adminInputContact) adminInputContact.value = data.admin_telegram_contact || '';
@@ -1497,6 +1546,7 @@ async function handleSaveAdminSettings(e) {
     const payload = {
         pricePerStudentMonth: adminInputPrice.value.trim(),
         pricePerStudentQuarter: adminInputPrice.value.trim(),
+        academicDiscountPercent: adminInputDiscount ? adminInputDiscount.value.trim() : '20',
         cardNumber: adminInputCard.value.trim(),
         cardHolder: adminInputHolder.value.trim(),
         adminTelegramContact: adminInputContact.value.trim()

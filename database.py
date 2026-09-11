@@ -242,6 +242,7 @@ def _run_migrations():
     default_settings = {
         "price_per_student_month": "800",
         "price_per_student_quarter": "2000",
+        "academic_discount_percent": "20",
         "card_number": "9860 1234 5678 9012",
         "card_holder": "ADMIN ISM FAMILIYA",
         "admin_telegram_contact": "@emaktabro_bot"
