@@ -928,6 +928,7 @@ function openSubscriptionModal() {
         if (regGrade && !regGrade.value) regGrade.value = currentUser.grade || '';
         if (regRegion && !regRegion.value) regRegion.value = currentUser.region || '';
     }
+    loadPublicSettings();
     recalcSubscription();
     modalOnboardingSub.classList.remove('hidden');
     triggerHaptic();
@@ -939,18 +940,31 @@ function closeSubscriptionModal() {
     }
 }
 
-function openOfertaModal() {
-    if (modalOferta) {
-        modalOferta.classList.remove('hidden');
-        triggerHaptic();
+function openOfertaModal(e) {
+    if (e) {
+        if (e.preventDefault) e.preventDefault();
+        if (e.stopPropagation) e.stopPropagation();
     }
+    const modal = document.getElementById('modal-oferta') || modalOferta;
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.style.setProperty('display', 'flex', 'important');
+        modal.style.zIndex = '99999';
+    }
+    triggerHaptic();
 }
 
-function closeOfertaModal() {
-    if (modalOferta) {
-        modalOferta.classList.add('hidden');
-        triggerHaptic();
+function closeOfertaModal(e) {
+    if (e) {
+        if (e.preventDefault) e.preventDefault();
+        if (e.stopPropagation) e.stopPropagation();
     }
+    const modal = document.getElementById('modal-oferta') || modalOferta;
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+    triggerHaptic();
 }
 
 window.openOfertaModal = openOfertaModal;
@@ -1031,7 +1045,7 @@ function selectTariff(tariff) {
 
 async function loadPublicSettings() {
     try {
-        const resp = await fetch('/api/settings/public');
+        const resp = await fetch(`/api/settings/public?t=${Date.now()}`, { cache: 'no-store' });
         if (resp.ok) {
             const data = await resp.json();
             currentPricePerMonth = data.pricePerStudentMonth || 800;
@@ -1043,8 +1057,10 @@ async function loadPublicSettings() {
             if (tariffAcademicDiscountBadge) {
                 if (currentAcademicDiscountPercent > 0) {
                     tariffAcademicDiscountBadge.textContent = `🏆 -${currentAcademicDiscountPercent}% CHEGIRMA`;
+                    tariffAcademicDiscountBadge.style.display = '';
                     tariffAcademicDiscountBadge.classList.remove('hidden');
                 } else {
+                    tariffAcademicDiscountBadge.style.display = 'none';
                     tariffAcademicDiscountBadge.classList.add('hidden');
                 }
             }
@@ -1145,6 +1161,16 @@ function recalcSubscription() {
     }
     if (tariffAcademicPrice) {
         tariffAcademicPrice.textContent = `${academicDiscounted.toLocaleString('uz-UZ')} so'm`;
+    }
+    if (tariffAcademicDiscountBadge) {
+        if (discountPercent > 0) {
+            tariffAcademicDiscountBadge.textContent = `🏆 -${discountPercent}% CHEGIRMA`;
+            tariffAcademicDiscountBadge.style.display = '';
+            tariffAcademicDiscountBadge.classList.remove('hidden');
+        } else {
+            tariffAcademicDiscountBadge.style.display = 'none';
+            tariffAcademicDiscountBadge.classList.add('hidden');
+        }
     }
     if (tariffAcademicDaysBadge) {
         tariffAcademicDaysBadge.textContent = `${academicInfo.days} kun`;
@@ -1561,7 +1587,19 @@ async function handleSaveAdminSettings(e) {
         if (!resp.ok) throw new Error('Saqlashda xatolik');
         triggerHaptic('success');
         showToast('Sozlamalar saqlandi!');
-        loadPublicSettings();
+
+        if (adminInputDiscount) {
+            currentAcademicDiscountPercent = parseInt(adminInputDiscount.value.trim()) || 0;
+        }
+        if (adminInputPrice) {
+            currentPricePerMonth = parseInt(adminInputPrice.value.trim()) || 800;
+            currentPricePerQuarter = currentPricePerMonth;
+            if (rateBadge) {
+                rateBadge.textContent = `1 o'quvchi / 1 oy: ${currentPricePerMonth.toLocaleString('uz-UZ')} so'm`;
+            }
+        }
+        recalcSubscription();
+        await loadPublicSettings();
     } catch (err) {
         showToast(err.message, true);
     } finally {

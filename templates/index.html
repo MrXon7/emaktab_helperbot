@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>eMaktab Helper</title>
+    <title>EduFlow Avto</title>
     <!-- Favicon (404 xatosini oldini olish) -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
     <!-- Telegram WebApp SDK - eng birinchi yuklanadi va darhol ready chaqiriladi -->
@@ -58,8 +58,8 @@
                     <i class="fa-solid fa-graduation-cap"></i>
                 </div>
                 <div class="min-w-0">
-                    <h1 class="text-sm sm:text-base font-extrabold text-slate-900 tracking-tight leading-none truncate">eMaktab Helper</h1>
-                    <p class="text-[10px] sm:text-[11px] text-slate-500 font-medium mt-0.5 truncate">Avtomatizatsiya & Captcha</p>
+                    <h1 class="text-sm sm:text-base font-extrabold text-slate-900 tracking-tight leading-none truncate">EduFlow Avto</h1>
+                    <p class="text-[10px] sm:text-[11px] text-slate-500 font-medium mt-0.5 truncate">Avtomatizatsiya & Monitoring</p>
                 </div>
             </div>
             
@@ -520,9 +520,9 @@
             <div class="text-center px-2 pt-1">
                 <p class="text-[11px] text-slate-500 leading-snug">
                     "To'lov qildim va so'rov yuborish" tugmasini bosish orqali siz 
-                    <button type="button" id="btn-open-oferta" onclick="openOfertaModal()" class="text-primary font-bold underline hover:text-primary-dark cursor-pointer inline">
+                    <a href="javascript:void(0)" id="btn-open-oferta" onclick="openOfertaModal(event)" class="text-primary font-bold underline hover:text-primary-dark cursor-pointer inline">
                         Ommaviy oferta
-                    </button> 
+                    </a> 
                     shartlariga to'liq rozilik bildirasiz.
                 </p>
             </div>
@@ -536,7 +536,7 @@
 
 
     <!-- OMMAVIY OFERTA MODALI -->
-    <div id="modal-oferta" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[60] flex items-end sm:items-center justify-center hidden p-0 sm:p-4">
+    <div id="modal-oferta" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4" style="z-index: 99999; display: none;">
         <div class="bg-white w-full max-w-2xl rounded-t-3xl sm:rounded-3xl p-4 sm:p-6 pb-6 space-y-3.5 shadow-2xl animate-slide-up max-h-[92vh] flex flex-col">
             <!-- Header -->
             <div class="flex items-center justify-between border-b border-border pb-3 shrink-0">
@@ -549,7 +549,7 @@
                         <p class="text-[10px] text-slate-500 font-medium">Foydalanish shartlari, maxfiylik va javobgarlik kelishuvi</p>
                     </div>
                 </div>
-                <button type="button" id="btn-close-oferta" onclick="closeOfertaModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition cursor-pointer">
+                <button type="button" id="btn-close-oferta" onclick="closeOfertaModal(event)" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition cursor-pointer">
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
@@ -567,7 +567,7 @@
                         Umumiy qoidalar va Aksept
                     </h4>
                     <p class="text-[11px] text-slate-600 pl-5">
-                        1.1. Mazkur hujjat O'zbekiston Respublikasi Fuqarolik Kodeksining 367 va 370-moddalariga muvofiq rasmiy <b>Ommaviy Oferta</b> (shartnoma) hisoblanadi.<br>
+                        1.1. Mazkur hujjat O'zbekiston Respublikasi Fuqarolik Kodeksining 367 va 370-moddalariga muvofiq "EduFlow Avto" tizimi bo'yicha rasmiy <b>Ommaviy Oferta</b> (shartnoma) hisoblanadi.<br>
                         1.2. Foydalanuvchi (o'qituvchi, sinf rahbari) tomonidan ro'yxatdan o'tish, ilovadan foydalanish yoki "To'lov qildim va so'rov yuborish" tugmasini bosish ushbu Ofertaning barcha shartlarini to'liq va so'zsiz qabul qilish (<b>Aksept</b>) hisoblanadi.
                     </p>
                 </div>
@@ -578,7 +578,7 @@
                         Ilovaning mustaqil maqomi va xususiyati ("As-Is")
                     </h4>
                     <p class="text-[11px] text-slate-600 pl-5">
-                        2.1. "eMaktab Helper" — o'qituvchilar va sinf rahbarlariga maktab hisobotlarini Excel jadvallar orqali shakllantirish, baholar va davomatni tizimlashtirishga yordam beruvchi mustaqil avtomatlashtirish yordamchisi (assistent vositadir).<br>
+                        2.1. "EduFlow Avto" — o'qituvchilar va sinf rahbarlariga o'z sinfidagi o'quvchilarni kundalikka kirishlarini nazorat qilishni tizimlashtirishda va monitoring qilishda yordam beruvchi mustaqil avtomatlashtirish yordamchisi (assistent vositadir).<br>
                         2.2. Mazkur ilova <b>hech qanday davlat tashkilotining, Vazirlikning yoki "eMaktab" (kundalik.com) platformasining rasmiy ilovasi emas</b>. Ilova mustaqil ishlab chiquvchilar tomonidan pedagoglarning kundalik mehnatini yengillatish maqsadida yaratilgan.<br>
                         2.3. Ilova <b>"boricha" ("as is")</b> tamoyili asosida taqdim etiladi. Ishlab chiquvchilar ilovaning to'xtovsiz yoki mutlaqo xatosiz ishlashiga qat'iy kafolat bermaydi.
                     </p>

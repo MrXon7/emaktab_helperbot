@@ -64,7 +64,7 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.error(f"Botni to'xtatishda xatolik: {e}")
 
-app = FastAPI(title="eMaktab Helper Multi-User", lifespan=lifespan)
+app = FastAPI(title="EduFlow Avto", lifespan=lifespan)
 
 # Statik fayllar va shablonlar
 static_dir = os.path.join(BASE_DIR, "static")
@@ -155,7 +155,7 @@ async def serve_webapp(request: Request):
 
 @app.get("/health")
 async def health_check():
-    return {"status": "ok", "app": "eMaktab Helper Multi-User", "database": "Supabase PostgreSQL"}
+    return {"status": "ok", "app": "EduFlow Avto", "database": "Supabase PostgreSQL"}
 
 @app.get("/api/me")
 async def get_me(
@@ -431,8 +431,11 @@ async def register_profile(
     return {"success": True, "user": user.profile_dict()}
 
 @app.get("/api/settings/public")
-async def get_public_settings(db: Session = Depends(get_db)):
+async def get_public_settings(response: Response, db: Session = Depends(get_db)):
     """Sinf rahbarlar uchun ommaviy to'lov va tarif narx sozlamalari"""
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
     month_val = SystemSetting.get(db, "price_per_student_month", "800")
     try:
         month_price = int(month_val)
@@ -624,10 +627,14 @@ async def admin_reject_order(
 
 @app.get("/api/admin/settings")
 async def admin_get_settings(
+    response: Response,
     admin: User = Depends(require_admin),
     db: Session = Depends(get_db)
 ):
     """Barcha tizim sozlamalarini olish (Admin)"""
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
     return {
         "price_per_student_month": SystemSetting.get(db, "price_per_student_month", "800"),
         "price_per_student_quarter": SystemSetting.get(db, "price_per_student_quarter", "2000"),

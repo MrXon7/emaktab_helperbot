@@ -32,7 +32,7 @@ async def handle_start(message: types.Message):
     user_name = message.from_user.first_name if message.from_user else "Foydalanuvchi"
     welcome_text = (
         f"Assalomu alaykum, <b>{user_name}</b>!\n\n"
-        "🤖 <b>EduFlow Avto (eMaktab Helper)</b> botiga xush kelibsiz!\n\n"
+        "🤖 <b>EduFlow Avto</b> botiga xush kelibsiz!\n\n"
         "Ushbu bot orqali siz:\n"
         "• O'quvchilar ro'yxatini (Excel) yuklashingiz;\n"
         "• Har bir o'quvchi hisobiga avtomatik kirishni ta'minlashingiz;\n"
