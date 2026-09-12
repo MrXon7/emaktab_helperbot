@@ -29,10 +29,10 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
 
 # Oddiy in-memory rate limiter: {user_id: [timestamp1, timestamp2, ...]}
-# 60 soniya ichida har bir foydalanuvchi uchun max 5 ta /api/login-single so'rovi
+# 60 soniya ichida har bir foydalanuvchi uchun max 30 ta /api/login-single so'rovi
 _rate_limit_store: dict[int, list[float]] = {}
 RATE_LIMIT_WINDOW = 60    # soniya
-RATE_LIMIT_MAX    = 5     # so'rovlar soni
+RATE_LIMIT_MAX    = 30    # so'rovlar soni (30 tagacha o'quvchilar uchun)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

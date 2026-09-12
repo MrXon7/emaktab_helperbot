@@ -838,36 +838,49 @@ async function startBulkAutomation() {
         bulkStatusText.textContent = `${student.name} ga kirilmoqda...`;
         renderStudents();
 
-        try {
-            const resp = await fetch('/api/login-single', {
-                method: 'POST',
-                headers: getAuthHeaders(),
-                body: JSON.stringify(student)
-            });
-            const result = await resp.json().catch(() => ({}));
+        let isDone = false;
+        let retry429 = 0;
+        while (!isDone && retry429 <= 1) {
+            try {
+                const resp = await fetch('/api/login-single', {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify(student)
+                });
+                const result = await resp.json().catch(() => ({}));
 
-            if (!resp.ok) {
+                if (!resp.ok) {
+                    if (resp.status === 403) {
+                        student.status = 'failed';
+                        student.message = result.detail || 'Obuna xatosi';
+                        showToast(result.detail || 'Obuna xatosi. Jarayon to\'xtatildi.', true);
+                        await loadUserProfile();
+                        shouldStopBulk = true;
+                        isDone = true;
+                        break;
+                    }
+                    if (resp.status === 429 && retry429 === 0) {
+                        retry429++;
+                        showToast(result.detail || 'Tezlik chegarasi. 2 soniya kutilmoqda...', true);
+                        await new Promise(r => setTimeout(r, 2000));
+                        continue;
+                    }
+                    student.status = 'failed';
+                    student.message = result.detail || 'Xatolik yuz berdi';
+                    isDone = true;
+                } else {
+                    student.status = result.status;
+                    student.message = result.message || '';
+                    if (result.status === 'success') {
+                        student.successAt = Date.now();
+                    }
+                    isDone = true;
+                }
+            } catch (err) {
                 student.status = 'failed';
-                student.message = result.detail || 'Xatolik yuz berdi';
-                if (resp.status === 403) {
-                    showToast(result.detail || 'Obuna xatosi. Jarayon to\'xtatildi.', true);
-                    await loadUserProfile();
-                    break;
-                }
-                if (resp.status === 429) {
-                    showToast(result.detail || 'Tezlik limiti. 10s kutilyapti...', true);
-                    await new Promise(r => setTimeout(r, 10000));
-                }
-            } else {
-                student.status = result.status;
-                student.message = result.message || '';
-                if (result.status === 'success') {
-                    student.successAt = Date.now();
-                }
+                student.message = 'Tarmoq xatosi: ' + err.message;
+                isDone = true;
             }
-        } catch (err) {
-            student.status = 'failed';
-            student.message = 'Tarmoq xatosi: ' + err.message;
         }
 
         completed++;
@@ -877,7 +890,7 @@ async function startBulkAutomation() {
 
         renderStudents();
         updateStats();
-        await new Promise(r => setTimeout(r, 400));
+        await new Promise(r => setTimeout(r, 1000));
     }
 
     stopBulkAutomation();

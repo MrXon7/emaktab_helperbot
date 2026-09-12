@@ -4,6 +4,7 @@ import uuid
 import json
 import codecs
 import logging
+import asyncio
 import httpx
 from bs4 import BeautifulSoup
 from PIL import Image, ImageEnhance
@@ -154,6 +155,8 @@ class EmaktabService:
                     # Muvaffaqiyat tekshiruvi
                     if cls._is_login_successful(final_url, resp.text):
                         logger.info(f"[{person_name} - {account_role}] ✅ Muvaffaqiyatli kirildi! URL: {final_url}")
+                        # eMaktab tizimida sessiyani ushlab turish va xavfsizlik cheklovlarining oldini olish uchun profil ichida 1 soniya turish
+                        await asyncio.sleep(1.0)
                         return True, "Muvaffaqiyatli kirildi"
 
                     # Xatolik yoki Captcha talabi chiqdimi?
@@ -202,6 +205,8 @@ class EmaktabService:
                     # Muvaffaqiyat tekshiruvi
                     if cls._is_login_successful(final_url, resp.text):
                         logger.info(f"[{person_name} - {account_role}] ✅ Muvaffaqiyatli kirildi! URL: {final_url}")
+                        # eMaktab tizimida sessiyani ushlab turish va xavfsizlik cheklovlarining oldini olish uchun profil ichida 1 soniya turish
+                        await asyncio.sleep(1.0)
                         return True, "Muvaffaqiyatli kirildi"
 
                     # Javob tahlili
