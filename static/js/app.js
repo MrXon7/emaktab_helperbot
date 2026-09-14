@@ -433,7 +433,38 @@ function updateStatCardStyles() {
 btnAddManual.addEventListener('click', () => openStudentForm());
 btnCloseFormModal.addEventListener('click', () => modalStudentForm.classList.add('hidden'));
 
+function togglePasswordVisibility(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+    if (!input) return;
+
+    if (input.type === 'password') {
+        input.type = 'text';
+        if (icon) {
+            icon.className = 'fa-solid fa-eye-slash text-xs text-primary';
+        }
+    } else {
+        input.type = 'password';
+        if (icon) {
+            icon.className = 'fa-regular fa-eye text-xs text-slate-400';
+        }
+    }
+    triggerHaptic();
+}
+window.togglePasswordVisibility = togglePasswordVisibility;
+
 function openStudentForm(student = null) {
+    // Parollarni yashirin holatga va ko'z ikonkasini asl holatiga qaytarish
+    const pwdInput = document.getElementById('input-password');
+    const pwdIcon = document.getElementById('icon-toggle-password');
+    if (pwdInput) pwdInput.type = 'password';
+    if (pwdIcon) pwdIcon.className = 'fa-regular fa-eye text-xs text-slate-400';
+
+    const parentPwdInput = document.getElementById('input-parent-password');
+    const parentPwdIcon = document.getElementById('icon-toggle-parent-password');
+    if (parentPwdInput) parentPwdInput.type = 'password';
+    if (parentPwdIcon) parentPwdIcon.className = 'fa-regular fa-eye text-xs text-slate-400';
+
     if (student) {
         modalFormTitle.textContent = 'O\'quvchini tahrirlash';
         inputEditId.value = student.id;

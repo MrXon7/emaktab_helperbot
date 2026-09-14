@@ -318,7 +318,12 @@
                     </div>
                     <div>
                         <label class="block text-[11px] font-semibold text-slate-600 mb-1">O'quvchi Paroli</label>
-                        <input type="password" id="input-password" required placeholder="Parol" class="w-full px-3 py-2 bg-surface border border-border rounded-xl text-xs focus:ring-2 focus:ring-primary/20 focus:outline-none">
+                        <div class="relative flex items-center">
+                            <input type="password" id="input-password" required placeholder="Parol" class="w-full pl-3 pr-8 py-2 bg-surface border border-border rounded-xl text-xs focus:ring-2 focus:ring-primary/20 focus:outline-none">
+                            <button type="button" onclick="togglePasswordVisibility('input-password', 'icon-toggle-password')" class="absolute right-2 text-slate-400 hover:text-slate-600 transition p-1 focus:outline-none cursor-pointer" title="Parolni ko'rish/yashirish">
+                                <i id="icon-toggle-password" class="fa-regular fa-eye text-xs"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
                 
@@ -336,7 +341,12 @@
                         </div>
                         <div>
                             <label class="block text-[10px] font-semibold text-slate-500 mb-1">Ota-ona Paroli</label>
-                            <input type="password" id="input-parent-password" placeholder="Parol" class="w-full px-3 py-2 bg-surface border border-border rounded-xl text-xs focus:ring-2 focus:ring-primary/20 focus:outline-none">
+                            <div class="relative flex items-center">
+                                <input type="password" id="input-parent-password" placeholder="Parol" class="w-full pl-3 pr-8 py-2 bg-surface border border-border rounded-xl text-xs focus:ring-2 focus:ring-primary/20 focus:outline-none">
+                                <button type="button" onclick="togglePasswordVisibility('input-parent-password', 'icon-toggle-parent-password')" class="absolute right-2 text-slate-400 hover:text-slate-600 transition p-1 focus:outline-none cursor-pointer" title="Parolni ko'rish/yashirish">
+                                    <i id="icon-toggle-parent-password" class="fa-regular fa-eye text-xs"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
