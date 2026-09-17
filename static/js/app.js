@@ -188,6 +188,15 @@ function renderSubscriptionBanner() {
     const sCount = students.length;
     const maxS = currentUser.maxStudents || 10;
 
+    if (currentUser.isAdmin) {
+        subscriptionBanner.classList.add('bg-purple-50', 'text-purple-900', 'border-purple-200');
+        subIcon.innerHTML = '<i class="fa-solid fa-shield-halved text-purple-600 text-base"></i>';
+        subText.innerHTML = `<b>Admin rejimi:</b> Barcha foydalanuvchilar o'quvchilari (${sCount} ta)`;
+        subBadge.className = 'shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700';
+        subBadge.textContent = 'ADMIN';
+        return;
+    }
+
     if (currentUser.plan === 'active') {
         subscriptionBanner.classList.add('bg-emerald-50', 'text-emerald-800', 'border-emerald-200');
         subIcon.innerHTML = '<i class="fa-solid fa-crown text-emerald-600 text-base"></i>';
@@ -621,7 +630,8 @@ function getFilteredStudents() {
         const matchQuery = !query || 
             s.name.toLowerCase().includes(query) || 
             s.login.toLowerCase().includes(query) ||
-            s.id.toLowerCase().includes(query);
+            s.id.toLowerCase().includes(query) ||
+            (s.ownerName && s.ownerName.toLowerCase().includes(query));
 
         const matchSchool = selectedSchool === 'all' || s.schoolName === selectedSchool;
         const matchGrade = selectedGrade === 'all' || s.grade === selectedGrade;
@@ -700,6 +710,12 @@ function renderStudents() {
         }
 
         const initials = student.name.charAt(0).toUpperCase();
+        const ownerBadge = (currentUser?.isAdmin && student.ownerName) ? `
+            <span class="shrink-0">•</span>
+            <span class="inline-flex items-center text-[9px] font-semibold text-purple-700 bg-purple-50 border border-purple-200 px-1.5 py-0.2 rounded shrink-0" title="Yuklagan o'qituvchi: ${student.ownerName}">
+                <i class="fa-solid fa-user-tie text-[8px] mr-1"></i>${student.ownerName}
+            </span>
+        ` : '';
 
         let messageHtml = '';
         if (student.message) {
@@ -735,6 +751,7 @@ function renderStudents() {
                                 ${student.parentLogin 
                                     ? `<span class="text-emerald-600 font-semibold shrink-0" title="Ota-ona logini: ${student.parentLogin}"><i class="fa-solid fa-user-group text-[9px] mr-0.5"></i>Ota-ona bor</span>` 
                                     : `<span class="text-slate-400 shrink-0" title="Ota-ona kiritilmagan"><i class="fa-solid fa-user-xmark text-[9px] mr-0.5"></i>Ota-onasiz</span>`}
+                                ${ownerBadge}
                             </div>
                         </div>
                     </div>

@@ -221,8 +221,11 @@ async def get_students(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Joriy foydalanuvchining o'quvchilari (7 kunlik muddati tekshirilgan holda)"""
-    students = db.query(Student).filter(Student.user_id == user.id).order_by(Student.created_at.desc()).all()
+    """Joriy foydalanuvchining o'quvchilari (Admin uchun barcha foydalanuvchilar o'quvchilari)"""
+    if is_admin_user(user):
+        students = db.query(Student).order_by(Student.created_at.desc()).all()
+    else:
+        students = db.query(Student).filter(Student.user_id == user.id).order_by(Student.created_at.desc()).all()
     
     now_ms = int(time.time() * 1000)
     has_expired = False
@@ -257,14 +260,17 @@ async def upload_excel(
         parsed_students = ExcelParser.parse_excel_bytes(content)
 
         # Limit tekshiruvi
-        current_count = db.query(Student).filter(Student.user_id == user.id).count()
-        slots_left = user.max_students - current_count
-        if slots_left <= 0:
-            raise HTTPException(
-                status_code=403,
-                detail=f"O'quvchilar limiti to'ldi ({user.max_students} ta). "
-                       "Ko'proq o'quvchi qo'shish uchun obunani yangilang."
-            )
+        if is_admin_user(user):
+            slots_left = len(parsed_students)
+        else:
+            current_count = db.query(Student).filter(Student.user_id == user.id).count()
+            slots_left = user.max_students - current_count
+            if slots_left <= 0:
+                raise HTTPException(
+                    status_code=403,
+                    detail=f"O'quvchilar limiti to'ldi ({user.max_students} ta). "
+                           "Ko'proq o'quvchi qo'shish uchun obunani yangilang."
+                )
 
         # Limit oshib ketmasligi uchun qisqartirish
         students_to_add = parsed_students[:slots_left]
@@ -309,14 +315,15 @@ async def create_student(
     db: Session = Depends(get_db)
 ):
     """Qo'lda yangi o'quvchi qo'shish (obuna va limit tekshiriladi)"""
-    # Limit tekshiruvi
-    current_count = db.query(Student).filter(Student.user_id == user.id).count()
-    if current_count >= user.max_students:
-        raise HTTPException(
-            status_code=403,
-            detail=f"O'quvchilar limiti to'ldi ({user.max_students} ta). "
-                   "Ko'proq o'quvchi qo'shish uchun obunani yangilang."
-        )
+    # Limit tekshiruvi (oddiy foydalanuvchilar uchun)
+    if not is_admin_user(user):
+        current_count = db.query(Student).filter(Student.user_id == user.id).count()
+        if current_count >= user.max_students:
+            raise HTTPException(
+                status_code=403,
+                detail=f"O'quvchilar limiti to'ldi ({user.max_students} ta). "
+                       "Ko'proq o'quvchi qo'shish uchun obunani yangilang."
+            )
 
     student_id = f"std_{int(time.time() * 1000)}_{os.urandom(2).hex()}"
     student = Student(
@@ -344,8 +351,12 @@ async def update_student(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """O'quvchini tahrirlash (faqat o'ziga tegishlisini)"""
-    student = db.query(Student).filter(Student.id == student_id, Student.user_id == user.id).first()
+    """O'quvchini tahrirlash (admin barcha o'quvchilarni tahrirlashi mumkin)"""
+    if is_admin_user(user):
+        student = db.query(Student).filter(Student.id == student_id).first()
+    else:
+        student = db.query(Student).filter(Student.id == student_id, Student.user_id == user.id).first()
+
     if not student:
         raise HTTPException(status_code=404, detail="O'quvchi topilmadi")
 
@@ -369,8 +380,12 @@ async def delete_student(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """O'quvchini o'chirish"""
-    student = db.query(Student).filter(Student.id == student_id, Student.user_id == user.id).first()
+    """O'quvchini o'chirish (admin barcha o'quvchilarni o'chirishi mumkin)"""
+    if is_admin_user(user):
+        student = db.query(Student).filter(Student.id == student_id).first()
+    else:
+        student = db.query(Student).filter(Student.id == student_id, Student.user_id == user.id).first()
+
     if not student:
         raise HTTPException(status_code=404, detail="O'quvchi topilmadi")
 
@@ -385,23 +400,28 @@ async def login_single(
     db: Session = Depends(get_db)
 ):
     """Bitta o'quvchiga emaktab.uz orqali kirish (obuna + rate limit tekshiriladi)"""
-    # Rate limit tekshiruvi
-    now_ts = time.time()
-    history = _rate_limit_store.get(user.id, [])
-    history = [ts for ts in history if now_ts - ts < RATE_LIMIT_WINDOW]
-    if len(history) >= RATE_LIMIT_MAX:
-        wait_sec = int(RATE_LIMIT_WINDOW - (now_ts - history[0]))
-        raise HTTPException(
-            status_code=429,
-            detail=f"Juda ko'p so'rov. {wait_sec} soniyadan so'ng qayta urinib ko'ring."
-        )
-    history.append(now_ts)
-    _rate_limit_store[user.id] = history
+    # Rate limit tekshiruvi (faqat oddiy foydalanuvchilar uchun)
+    if not is_admin_user(user):
+        now_ts = time.time()
+        history = _rate_limit_store.get(user.id, [])
+        history = [ts for ts in history if now_ts - ts < RATE_LIMIT_WINDOW]
+        if len(history) >= RATE_LIMIT_MAX:
+            wait_sec = int(RATE_LIMIT_WINDOW - (now_ts - history[0]))
+            raise HTTPException(
+                status_code=429,
+                detail=f"Juda ko'p so'rov. {wait_sec} soniyadan so'ng qayta urinib ko'ring."
+            )
+        history.append(now_ts)
+        _rate_limit_store[user.id] = history
 
     result = await EmaktabService.process_student_login(student_req.model_dump())
 
     # Bazadagi statusni yangilash
-    student = db.query(Student).filter(Student.id == student_req.id, Student.user_id == user.id).first()
+    if is_admin_user(user):
+        student = db.query(Student).filter(Student.id == student_req.id).first()
+    else:
+        student = db.query(Student).filter(Student.id == student_req.id, Student.user_id == user.id).first()
+
     if student:
         student.status = result["status"]
         student.message = result.get("message", "")

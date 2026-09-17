@@ -123,10 +123,19 @@ async def require_active_subscription(
 ) -> User:
     """
     Obuna holatini tekshiruvchi dependency.
+    - Admin foydalanuvchilar har doim to'liq ruxsatga ega
     - "blocked"  → 403 xatosi
     - "trial" va 7 kun muddati o'tgan → 403 xatosi
     - "active" va muddati o'tgan → avtomatik "trial" ga qaytaradi, 403 xatosi
     """
+    # Admin foydalanuvchilarga to'liq cheklovsiz ruxsat
+    if getattr(user, "is_admin", False) is True:
+        return user
+    if user.telegram_id:
+        admin_str_ids = [str(a) for a in settings.ADMIN_IDS]
+        if str(user.telegram_id) in admin_str_ids or str(user.telegram_id).startswith("dev_"):
+            return user
+
     if user.plan == "blocked":
         raise HTTPException(
             status_code=403,

@@ -111,8 +111,13 @@ class Student(Base):
     owner = relationship("User", back_populates="students")
 
     def to_dict(self):
+        owner_name = ""
+        if self.owner:
+            owner_name = self.owner.full_name or self.owner.first_name or self.owner.username or f"O'qituvchi #{self.user_id}"
         return {
             "id": self.id,
+            "userId": self.user_id,
+            "ownerName": owner_name,
             "name": self.name,
             "schoolName": self.school_name,
             "grade": self.grade,
