@@ -711,9 +711,8 @@ function renderStudents() {
 
         const initials = student.name.charAt(0).toUpperCase();
         const ownerBadge = (currentUser?.isAdmin && student.ownerName) ? `
-            <span class="shrink-0">•</span>
-            <span class="inline-flex items-center text-[9px] font-semibold text-purple-700 bg-purple-50 border border-purple-200 px-1.5 py-0.2 rounded shrink-0" title="Yuklagan o'qituvchi: ${student.ownerName}">
-                <i class="fa-solid fa-user-tie text-[8px] mr-1"></i>${student.ownerName}
+            <span class="inline-flex items-center gap-1 text-[9px] font-semibold text-purple-700 bg-purple-50 border border-purple-200 px-1.5 py-0.5 rounded-md" title="Yuklagan o'qituvchi: ${student.ownerName}">
+                <i class="fa-solid fa-user-tie text-[8px]"></i>${student.ownerName}
             </span>
         ` : '';
 
@@ -751,7 +750,6 @@ function renderStudents() {
                                 ${student.parentLogin 
                                     ? `<span class="text-emerald-600 font-semibold shrink-0" title="Ota-ona logini: ${student.parentLogin}"><i class="fa-solid fa-user-group text-[9px] mr-0.5"></i>Ota-ona bor</span>` 
                                     : `<span class="text-slate-400 shrink-0" title="Ota-ona kiritilmagan"><i class="fa-solid fa-user-xmark text-[9px] mr-0.5"></i>Ota-onasiz</span>`}
-                                ${ownerBadge}
                             </div>
                         </div>
                     </div>
@@ -759,6 +757,7 @@ function renderStudents() {
                         ${statusBadge}
                     </div>
                 </div>
+                ${ownerBadge ? `<div class="flex items-center">${ownerBadge}</div>` : ''}
 
                 <!-- Pastki qator: Status xabari va Harakat tugmalari -->
                 <div class="flex items-center justify-between pt-1.5 border-t border-slate-100/80 gap-2">
