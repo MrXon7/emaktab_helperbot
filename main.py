@@ -21,6 +21,7 @@ from auth import get_current_user, require_active_subscription
 from emaktab_service import EmaktabService
 from excel_parser import ExcelParser
 from keep_alive import keep_alive
+from crypto import encrypt_value, decrypt_value
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -285,9 +286,9 @@ async def upload_excel(
                 school_name=item["schoolName"],
                 grade=item["grade"],
                 login=item["login"],
-                password=item["password"],
+                password=encrypt_value(item["password"]),
                 parent_login=item.get("parentLogin", "").strip(),
-                parent_password=item.get("parentPassword", "").strip(),
+                parent_password=encrypt_value(item.get("parentPassword", "").strip()) if item.get("parentPassword", "").strip() else "",
                 status="pending",
                 message=""
             )
@@ -333,9 +334,9 @@ async def create_student(
         school_name=req.schoolName.strip() or "Maktab",
         grade=req.grade.strip() or "1-A",
         login=req.login.strip(),
-        password=req.password.strip(),
+        password=encrypt_value(req.password.strip()),
         parent_login=req.parentLogin.strip(),
-        parent_password=req.parentPassword.strip(),
+        parent_password=encrypt_value(req.parentPassword.strip()) if req.parentPassword.strip() else "",
         status="pending",
         message=""
     )
@@ -364,9 +365,9 @@ async def update_student(
     student.school_name = req.schoolName.strip() or "Maktab"
     student.grade = req.grade.strip() or "1-A"
     student.login = req.login.strip()
-    student.password = req.password.strip()
+    student.password = encrypt_value(req.password.strip())
     student.parent_login = req.parentLogin.strip()
-    student.parent_password = req.parentPassword.strip()
+    student.parent_password = encrypt_value(req.parentPassword.strip()) if req.parentPassword.strip() else ""
     student.status = "pending"
     student.message = "Ma'lumotlar tahrirlandi"
     
@@ -414,7 +415,12 @@ async def login_single(
         history.append(now_ts)
         _rate_limit_store[user.id] = history
 
-    result = await EmaktabService.process_student_login(student_req.model_dump())
+    student_payload = student_req.model_dump()
+    student_payload["password"] = decrypt_value(student_payload["password"])
+    if student_payload.get("parentPassword"):
+        student_payload["parentPassword"] = decrypt_value(student_payload["parentPassword"])
+
+    result = await EmaktabService.process_student_login(student_payload)
 
     # Bazadagi statusni yangilash
     if is_admin_user(user):

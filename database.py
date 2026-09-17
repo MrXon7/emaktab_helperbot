@@ -3,6 +3,7 @@ from datetime import datetime
 from sqlalchemy import create_engine, Column, String, Integer, BigInteger, DateTime, ForeignKey, Text, Boolean, text
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 from config import settings
+from crypto import encrypt_value, decrypt_value, ENC_PREFIX
 
 logger = logging.getLogger(__name__)
 
@@ -122,9 +123,9 @@ class Student(Base):
             "schoolName": self.school_name,
             "grade": self.grade,
             "login": self.login,
-            "password": self.password,
+            "password": decrypt_value(self.password),
             "parentLogin": self.parent_login or "",
-            "parentPassword": self.parent_password or "",
+            "parentPassword": decrypt_value(self.parent_password) if self.parent_password else "",
             "status": self.status,
             "message": self.message or "",
             "successAt": self.success_at
@@ -271,12 +272,40 @@ def _run_migrations():
         logger.error(f"Migration xatosi: {e}")
         raise e
 
+def _migrate_plain_passwords():
+    """Bazada hali shifrlanmagan eski ochiq parollarni xavfsiz AES-128/Fernet formatiga o'tkazish"""
+    try:
+        db = SessionLocal()
+        try:
+            unencrypted_students = db.query(Student).all()
+            count = 0
+            for s in unencrypted_students:
+                updated = False
+                if s.password and not s.password.startswith(ENC_PREFIX):
+                    s.password = encrypt_value(s.password)
+                    updated = True
+                if s.parent_password and not s.parent_password.startswith(ENC_PREFIX):
+                    s.parent_password = encrypt_value(s.parent_password)
+                    updated = True
+                if updated:
+                    count += 1
+            if count > 0:
+                db.commit()
+                logger.info(f"🔒 {count} ta o'quvchining ochiq paroli xavfsiz AES-128/Fernet bilan shifrlandi.")
+            else:
+                logger.info("🔒 Barcha o'quvchilar parollari allaqachon xavfsiz shifrlangan.")
+        finally:
+            db.close()
+    except Exception as e:
+        logger.warning(f"Parollarni shifrlash tekshiruvida ogohlantirish: {e}")
+
 def init_db():
     """Bazada jadvallarni avtomatik yaratish va migratsiyalarni ishga tushirish"""
     try:
         Base.metadata.create_all(bind=engine)
         logger.info("Supabase jadvallari (users, students, subscription_orders, system_settings) tayyorlandi.")
         _run_migrations()
+        _migrate_plain_passwords()
     except Exception as e:
         logger.error(f"Jadvallarni yaratishda yoki migratsiyada xato: {e}")
         raise e
